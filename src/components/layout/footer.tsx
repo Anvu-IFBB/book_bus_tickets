@@ -140,28 +140,28 @@ export function Footer() {
               </h3>
               <ul className="space-y-2.5 text-xs sm:text-sm text-slate-400">
                 <li>
-                  <Link href="/#dat-xe" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
+                  <Link href="/dich-vu#ve-limousine" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
                     <span>•</span> Vé xe Limousine VIP hàng ngày
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#thue-xe" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
-                    <span>•</span> Hợp đồng xe 5 - 7 chỗ gia đình
+                  <Link href="/dich-vu#thue-xe-hop-dong" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
+                    <span>•</span> Thuê xe hợp đồng 5 - 29 chỗ
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#thue-xe" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
-                    <span>•</span> Xe 11 - 16 chỗ Limousine sự kiện
+                  <Link href="/dich-vu#gui-hang-hoa" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
+                    <span>•</span> Nhận gửi hàng hóa hỏa tốc
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#thue-xe" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
-                    <span>•</span> Xe du lịch 29 chỗ Universe đoàn đông
+                  <Link href="/dich-vu#xe-du-lich" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
+                    <span>•</span> Xe đưa đón các khu du lịch
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#gui-hang" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
-                    <span>•</span> Nhận gửi hàng hóa, bưu phẩm hỏa tốc
+                  <Link href="/cam-ket" className="hover:text-gold-400 transition-colors flex items-center gap-1.5">
+                    <span>•</span> Cam kết chất lượng dịch vụ
                   </Link>
                 </li>
               </ul>
@@ -239,8 +239,16 @@ export function Footer() {
               © {currentYear} {APP_CONFIG.name}. Bản quyền thuộc về nhà xe.
             </p>
 
-            <div className="flex items-center gap-4">
-              <Link href="/tra-cuu" className="hover:text-slate-400 transition-colors">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+              <Link href="/gioi-thieu" className="hover:text-gold-400 transition-colors">
+                Giới thiệu
+              </Link>
+              <span>•</span>
+              <Link href="/cam-ket" className="hover:text-gold-400 transition-colors">
+                Cam kết chất lượng
+              </Link>
+              <span>•</span>
+              <Link href="/tra-cuu" className="hover:text-gold-400 transition-colors">
                 Tra cứu đơn
               </Link>
               <span>•</span>

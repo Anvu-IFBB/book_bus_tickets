@@ -5,6 +5,28 @@ Toàn bộ các mốc phát triển, tính năng mới và các bản sửa đ�
 
 ---
 
+## [Phase 3: Public Website] - 11/09/2026
+
+### Thêm Mới (Added):
+- **7 Public Routes hoàn chỉnh cho khách hàng thực tế:**
+  - `/` (Trang Chủ): 9 sections tiêu chuẩn (Hero, 4 dịch vụ, Lộ trình chính, Vì sao chọn chúng tôi, Booking CTA Banner, Customer Reviews architecture không bịa đặt, Contact CTA).
+  - `/dich-vu` (Dịch Vụ): Chi tiết 4 dịch vụ (Vé Limousine VIP, Thuê xe hợp đồng 5-29 chỗ, Nhận gửi hàng hỏa tốc, Xe đi khu du lịch), danh sách đặc quyền, tùy chọn xe, ghi chú giá cước minh bạch.
+  - `/tuyen-duong` (Tuyến Đường): Trục cao tốc 5 tỉnh thành (Quảng Ninh ⇄ Hải Phòng ⇄ Thái Bình ⇄ Nam Định ⇄ Ninh Bình), thẻ `RouteCard`, bảng `RouteTable`, quy định đón trả.
+  - `/gioi-thieu` (Giới Thiệu): Sứ mệnh, định hướng phục vụ, đội xe 5-29 chỗ, 3 trụ cột hoạt động, thông tin nhận diện chính thức.
+  - `/cam-ket` (Cam Kết Chất Lượng): 6 cam kết cốt lõi, quy trình 3 bước xử lý phản hồi/khiếu nại, câu hỏi thường gặp (FAQ).
+  - `/tra-cuu` (Tra Cứu Booking): Tích hợp trực tiếp `bookingService.lookupBooking`, 6 trạng thái UI rõ ràng (`idle`, `loading`, `invalid`, `notFound`, `error`, `success`).
+  - `/lien-he` (Liên Hệ): Hotline chính/phụ, Chat Zalo, Facebook Vũ Công Minh, địa chỉ văn phòng và form tiếp nhận yêu cầu tư vấn nhanh.
+- **Components Mới:**
+  - `RouteCard` & `RouteTable` (`src/components/routes/`).
+  - `ServiceCard` (`src/components/services/`).
+  - `RatingStars`, `ReviewCard`, `ReviewEmptyState`, `ReviewList` (`src/components/feedback/`).
+- **Nội dung & Dữ liệu chuẩn:**
+  - Cấu hình dữ liệu dịch vụ, cam kết và FAQ trong `src/lib/constants/publicContent.ts`.
+- **Tài liệu Nghiệm Thu:**
+  - Tạo báo cáo nghiệm thu chi tiết `PHASE_3_REPORT.md`.
+
+---
+
 ## [Phase 2: UI Foundation & Design System] - 11/09/2026
 
 ### Thêm Mới (Added):

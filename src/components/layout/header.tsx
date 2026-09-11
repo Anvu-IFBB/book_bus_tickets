@@ -21,11 +21,12 @@ import {
 
 const NAV_LINKS = [
   { href: '/', label: 'Trang chủ' },
-  { href: '/#tuyen-duong', label: 'Tuyến đường' },
-  { href: '/#dich-vu', label: 'Dịch vụ' },
-  { href: '/tra-cuu', label: 'Tra cứu đơn' },
-  { href: '/#danh-gia', label: 'Đánh giá' },
-  { href: '/#lien-he', label: 'Liên hệ' },
+  { href: '/tuyen-duong', label: 'Tuyến đường' },
+  { href: '/dich-vu', label: 'Dịch vụ' },
+  { href: '/tra-cuu', label: 'Tra cứu' },
+  { href: '/gioi-thieu', label: 'Giới thiệu' },
+  { href: '/cam-ket', label: 'Cam kết' },
+  { href: '/lien-he', label: 'Liên hệ' },
 ];
 
 export function Header() {
@@ -118,7 +119,7 @@ export function Header() {
             </a>
 
             {/* Quick Booking CTA on desktop */}
-            <Link href="/#dat-xe" className="hidden md:inline-flex">
+            <Link href="/dich-vu" className="hidden md:inline-flex">
               <Button variant="primary" size="sm" leftIcon={<Calendar className="w-4 h-4" />}>
                 Đặt Vé Nhanh
               </Button>
