@@ -1,26 +1,101 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Navy Palette */
+  --color-navy-950: #030C14;
+  --color-navy-900: #071A2B;
+  --color-navy-800: #0E2841;
+  --color-navy-700: #16385B;
+  --color-navy-600: #1F4B78;
+  --color-navy-500: #2C629A;
+  --color-navy-400: #467FBD;
+  --color-navy-300: #75A3D8;
+  --color-navy-200: #A9C7ED;
+  --color-navy-100: #D5E4F7;
+  --color-navy-50: #F0F5FC;
+
+  /* Gold Palette */
+  --color-gold-900: #735B0F;
+  --color-gold-800: #947614;
+  --color-gold-700: #B5911B;
+  --color-gold-600: #C29B27;
+  --color-gold-500: #D4AF37;
+  --color-gold-400: #E0C25E;
+  --color-gold-300: #EBD58C;
+  --color-gold-200: #F4E7BD;
+  --color-gold-100: #FAF4DF;
+  --color-gold-50: #FDFBF2;
+
+  /* Typography */
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Custom Shadows */
+  --shadow-card: 0 4px 20px -2px rgba(7, 26, 43, 0.06), 0 2px 6px -1px rgba(7, 26, 43, 0.04);
+  --shadow-card-hover: 0 12px 30px -4px rgba(7, 26, 43, 0.12), 0 4px 10px -2px rgba(7, 26, 43, 0.06);
+  --shadow-gold-glow: 0 0 25px -3px rgba(212, 175, 55, 0.35);
+  --shadow-float: 0 10px 30px -5px rgba(7, 26, 43, 0.25);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base resets & enhancements */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tap target utility on touch devices */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Gold Gradient utilities for luxury touch */
+.bg-gradient-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #E0C25E 50%, #C29B27 100%);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #F4E7BD 50%, #C29B27 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gradient-navy {
+  background: linear-gradient(180deg, #071A2B 0%, #030C14 100%);
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
