@@ -9,6 +9,20 @@ const phoneValidator = z
     message: 'Số điện thoại không đúng định dạng Việt Nam (VD: 0868680944)',
   });
 
+const isNotPastDate = (dateStr: string) => {
+  if (!dateStr) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  return dateStr >= today;
+};
+
+const dateValidator = (label: string) =>
+  z
+    .string()
+    .min(1, `Vui lòng chọn ${label}`)
+    .refine(isNotPastDate, {
+      message: `${label} không được ở trong quá khứ`,
+    });
+
 // Schema đặt vé Limousine liên tỉnh
 export const limousineBookingSchema = z
   .object({
@@ -18,7 +32,7 @@ export const limousineBookingSchema = z
     customerEmail: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
     departure: z.string().min(1, 'Vui lòng chọn điểm xuất phát'),
     destination: z.string().min(1, 'Vui lòng chọn điểm đến'),
-    travelDate: z.string().min(1, 'Vui lòng chọn ngày khởi hành'),
+    travelDate: dateValidator('ngày khởi hành'),
     travelTime: z.string().min(1, 'Vui lòng chọn khung giờ đón'),
     returnDate: z.string().optional(),
     isRoundTrip: z.boolean().default(false),
@@ -52,7 +66,7 @@ export const contractBookingSchema = z.object({
   durationDays: z.number().int().min(1, 'Tối thiểu 1 ngày thuê').max(30, 'Tối đa 30 ngày'),
   departure: z.string().min(1, 'Vui lòng chọn tỉnh/thành xuất phát'),
   destination: z.string().min(1, 'Vui lòng nhập điểm đến'),
-  travelDate: z.string().min(1, 'Vui lòng chọn ngày đón xe'),
+  travelDate: dateValidator('ngày đón xe'),
   travelTime: z.string().min(1, 'Vui lòng chọn giờ đón'),
   pickupAddress: z.string().trim().min(3, 'Vui lòng nhập địa chỉ đón cụ thể'),
   dropoffAddress: z.string().trim().min(3, 'Vui lòng nhập địa chỉ trả/lộ trình'),
@@ -73,7 +87,7 @@ export const cargoBookingSchema = z.object({
   cargoType: z.string().trim().min(2, 'Vui lòng ghi rõ loại hàng gửi'),
   quantity: z.number().min(1).default(1),
   estimatedWeightKg: z.number().min(0.1, 'Khối lượng phải lớn hơn 0').optional(),
-  travelDate: z.string().min(1, 'Vui lòng chọn ngày gửi'),
+  travelDate: dateValidator('ngày gửi hàng'),
   note: z.string().max(500).optional(),
 });
 
@@ -85,7 +99,7 @@ export const tourBookingSchema = z.object({
   customerEmail: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
   tourDestination: z.string().trim().min(2, 'Vui lòng nhập khu du lịch (VD: Hạ Long, Tràng An)'),
   departure: z.string().min(1, 'Vui lòng chọn nơi xuất phát'),
-  travelDate: z.string().min(1, 'Vui lòng chọn ngày đi'),
+  travelDate: dateValidator('ngày khởi hành tour'),
   returnDate: z.string().optional(),
   travelTime: z.string().min(1, 'Vui lòng chọn giờ đón'),
   passengerCount: z.number().int().min(1, 'Tối thiểu 1 hành khách'),

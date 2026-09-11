@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, Badge, Button } from '@/components/ui';
 import { MapPin, Clock, ArrowRight, ShieldCheck, Phone } from 'lucide-react';
 import { APP_CONFIG } from '@/lib/constants/config';
@@ -84,15 +85,23 @@ export const RouteCard: React.FC<RouteCardProps> = ({
         </div>
       </CardContent>
 
-      <CardFooter className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+      <CardFooter className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <Link
+          href={`/dat-xe?from=${encodeURIComponent(departure)}&to=${encodeURIComponent(destination)}`}
+          className="flex-1"
+        >
+          <Button variant="primary" size="sm" fullWidth>
+            Đặt Vé Tuyến Này
+          </Button>
+        </Link>
         <a href={`tel:${APP_CONFIG.primaryHotline}`} className="flex-1">
           <Button
-            variant="primary"
+            variant="outline"
             size="sm"
             fullWidth
             leftIcon={<Phone className="w-3.5 h-3.5" />}
           >
-            Gọi Đặt Vé
+            Gọi Tổng Đài
           </Button>
         </a>
       </CardFooter>

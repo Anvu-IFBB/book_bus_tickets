@@ -119,7 +119,7 @@ export function Header() {
             </a>
 
             {/* Quick Booking CTA on desktop */}
-            <Link href="/dich-vu" className="hidden md:inline-flex">
+            <Link href="/dat-xe" className="hidden md:inline-flex">
               <Button variant="primary" size="sm" leftIcon={<Calendar className="w-4 h-4" />}>
                 Đặt Vé Nhanh
               </Button>
@@ -206,9 +206,9 @@ export function Header() {
               </a>
             </div>
 
-            <Link href="/#dat-xe" onClick={() => setIsMobileMenuOpen(false)} className="block w-full">
+            <Link href="/dat-xe" onClick={() => setIsMobileMenuOpen(false)} className="block w-full">
               <Button variant="primary" size="lg" fullWidth leftIcon={<Calendar className="w-5 h-5" />}>
-                Đặt Vé Limousine Ngay
+                Đặt Vé Trực Tuyến Ngay
               </Button>
             </Link>
 

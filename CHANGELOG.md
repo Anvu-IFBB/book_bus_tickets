@@ -5,6 +5,29 @@ Toàn bộ các mốc phát triển, tính năng mới và các bản sửa đ�
 
 ---
 
+## [Phase 4: Booking Engine & Client Flow] - 11/09/2026
+
+### Thêm Mới (Added):
+- **Bộ Máy Đặt Chỗ 5 Bước Reusable (`src/components/booking/`):**
+  - Step 1: Chọn dịch vụ (Limousine VIP, Thuê xe hợp đồng, Gửi hàng hỏa tốc, Xe du lịch).
+  - Step 2: Nhập thông tin chuyến đi tương ứng từng dịch vụ (Chặn ngày trong quá khứ, chọn giờ, số khách/kiện).
+  - Step 3: Nhập thông tin khách hàng & địa chỉ đón/trả tận nơi chi tiết (Thông tin người gửi/nhận cho hàng hóa).
+  - Step 4: Kiểm tra và rà soát thông tin trước khi xác nhận đặt chỗ.
+  - Step 5: Màn hình kết quả hiển thị mã booking thật (`BK...` hoặc `HG...`), nút sao chép và chuyển nhanh sang tra cứu.
+- **Trang Đặt Xe Chuyên Biệt (`src/app/dat-xe/page.tsx`):**
+  - Route `/dat-xe` độc lập, hỗ trợ tham số URL query (`?service=...`, `?from=...`, `?to=...`).
+  - Liên kết trực tiếp từ nút Đặt vé trên Header, Mobile Drawer, Trang chủ, Dịch vụ và Tuyến đường.
+- **Kiểm Thử Tự Động Toàn Diện:**
+  - Bộ kiểm thử tự động `src/lib/test-phase4.ts` (`npm run test:phase4`) xác thực 100% 4 luồng dịch vụ, mã đơn, và tra cứu bảo mật.
+- **Tài Liệu Nghiệm Thu:**
+  - Báo cáo chi tiết `PHASE_4_REPORT.md`.
+
+### Cải Tiến (Improved):
+- Bổ sung `dateValidator` trong `bookingSchema.ts` chặn ngày khởi hành trong quá khứ.
+- Chuẩn hóa logic đếm sequence trong `MemoryBookingRepository.getNextSequenceForDate` đảm bảo mỗi booking sinh mã duy nhất tăng dần.
+
+---
+
 ## [Phase 3: Public Website] - 11/09/2026
 
 ### Thêm Mới (Added):

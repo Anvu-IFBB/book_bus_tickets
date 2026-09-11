@@ -126,26 +126,32 @@ export default function ServicesPage() {
 
                       {/* CTA Buttons */}
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4">
-                        <a href={`tel:${APP_CONFIG.primaryHotline}`} className="w-full sm:w-auto">
-                          <Button
-                            variant="primary"
-                            size="md"
-                            fullWidth
-                            leftIcon={<Phone className="w-4 h-4" />}
-                          >
-                            Gọi Đặt Dịch Vụ Ngay
+                        <Link
+                          href={`/dat-xe?service=${
+                            svc.id === 've-limousine'
+                              ? 'limousine'
+                              : svc.id === 'thue-xe-hop-dong'
+                              ? 'contract'
+                              : svc.id === 'gui-hang-hoa'
+                              ? 'cargo'
+                              : 'tour'
+                          }`}
+                          className="w-full sm:w-auto"
+                        >
+                          <Button variant="primary" size="md" fullWidth rightIcon={<ArrowRight className="w-4 h-4" />}>
+                            Đặt Trực Tuyến Ngay
                           </Button>
-                        </a>
-                        <Link href="/lien-he" className="w-full sm:w-auto">
+                        </Link>
+                        <a href={`tel:${APP_CONFIG.primaryHotline}`} className="w-full sm:w-auto">
                           <Button
                             variant="outline"
                             size="md"
                             fullWidth
-                            rightIcon={<ArrowRight className="w-4 h-4" />}
+                            leftIcon={<Phone className="w-4 h-4" />}
                           >
-                            Gửi Yêu Cầu Tư Vấn
+                            Tư Vấn Hotline: {APP_CONFIG.hotlines[0]}
                           </Button>
-                        </Link>
+                        </a>
                       </div>
                     </div>
 

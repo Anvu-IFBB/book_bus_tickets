@@ -99,8 +99,11 @@ export class MemoryBookingRepository implements IBookingRepository {
   }
 
   async getNextSequenceForDate(dateStr: string): Promise<number> {
-    // Đếm số lượng booking trong ngày để sinh số thứ tự
-    const count = this.bookings.filter((b) => b.createdAt.startsWith(dateStr)).length;
+    const cleanDate = dateStr.replace(/\D/g, '');
+    const count = this.bookings.filter((b) => {
+      const bDate = b.createdAt.slice(0, 10).replace(/\D/g, '');
+      return bDate === cleanDate || b.bookingCode.includes(cleanDate);
+    }).length;
     return count + 1;
   }
 }

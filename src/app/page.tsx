@@ -72,38 +72,38 @@ export default function HomePage() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
-                <a href={`tel:${APP_CONFIG.primaryHotline}`} className="w-full sm:w-auto">
+                <Link href="/dat-xe" className="w-full sm:w-auto">
                   <Button
                     variant="primary"
                     size="lg"
                     fullWidth
-                    leftIcon={<Phone className="w-5 h-5" />}
+                    leftIcon={<Calendar className="w-5 h-5" />}
                   >
-                    Gọi Đặt Vé: {APP_CONFIG.hotlines[0]}
+                    Đặt Vé Trực Tuyến
                   </Button>
-                </a>
+                </Link>
 
-                <Link href="/tra-cuu" className="w-full sm:w-auto">
+                <a href={`tel:${APP_CONFIG.primaryHotline}`} className="w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="lg"
                     fullWidth
                     className="border-slate-400 text-white hover:bg-navy-900 hover:text-gold-400"
-                    leftIcon={<Search className="w-5 h-5 text-gold-400" />}
+                    leftIcon={<Phone className="w-5 h-5 text-gold-400" />}
                   >
-                    Tra Cứu Đơn Xe
+                    Hotline: {APP_CONFIG.hotlines[0]}
                   </Button>
-                </Link>
+                </a>
 
-                <Link href="/dich-vu" className="w-full sm:w-auto">
+                <Link href="/tra-cuu" className="w-full sm:w-auto">
                   <Button
                     variant="ghost"
                     size="lg"
                     fullWidth
                     className="text-slate-300 hover:text-white hover:bg-navy-900/50"
-                    rightIcon={<ArrowRight className="w-4 h-4" />}
+                    leftIcon={<Search className="w-4 h-4 text-gold-400" />}
                   >
-                    Khám Phá Dịch Vụ
+                    Tra Cứu
                   </Button>
                 </Link>
               </div>
@@ -175,10 +175,26 @@ export default function HomePage() {
                     </ul>
                   </CardContent>
 
-                  <div className="p-4 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <Link href={`/dich-vu#${svc.id}`} className="w-full">
-                      <Button variant="outline" size="sm" fullWidth rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                        Tìm Hiểu Thêm
+                  <div className="p-4 pt-2 border-t border-slate-100 flex items-center gap-2">
+                    <Link
+                      href={`/dat-xe?service=${
+                        svc.id === 've-limousine'
+                          ? 'limousine'
+                          : svc.id === 'thue-xe-hop-dong'
+                          ? 'contract'
+                          : svc.id === 'gui-hang-hoa'
+                          ? 'cargo'
+                          : 'tour'
+                      }`}
+                      className="flex-1"
+                    >
+                      <Button variant="primary" size="sm" fullWidth>
+                        Đặt Ngay
+                      </Button>
+                    </Link>
+                    <Link href={`/dich-vu#${svc.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" fullWidth>
+                        Chi Tiết
                       </Button>
                     </Link>
                   </div>
