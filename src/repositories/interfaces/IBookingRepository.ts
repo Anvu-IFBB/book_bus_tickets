@@ -1,11 +1,6 @@
-import { Booking, BookingStatus, BookingServiceType } from '@/types/booking';
+import { Booking, BookingFilter } from '@/types/booking';
 
-export interface BookingFilter {
-  status?: BookingStatus;
-  serviceType?: BookingServiceType;
-  date?: string;
-  search?: string;
-}
+export type { BookingFilter };
 
 export interface IBookingRepository {
   create(booking: Booking): Promise<Booking>;

@@ -1,20 +1,28 @@
-export type PaymentType = 'DEPOSIT' | 'FULL' | 'REMAINDER' | 'REFUND';
+export type PaymentStatus = 'PENDING' | 'DEPOSITED' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
 
 export type PaymentMethod = 'CASH' | 'BANK_TRANSFER' | 'QR' | 'OTHER';
 
-export type PaymentRecordStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
-
 export interface Payment {
-  id: string;
+  id: string; // paymentId
   bookingId: string;
+  bookingCode: string;
   customerId: string;
-  amount: number; // VNĐ
-  type: PaymentType;
-  method: PaymentMethod;
-  status: PaymentRecordStatus;
+  
+  totalAmount: number; // VNĐ
+  depositAmount: number; // VNĐ
+  paidAmount: number; // VNĐ
+  remainingAmount: number; // VNĐ
+  
+  status: PaymentStatus;
+  paymentMethod?: PaymentMethod;
   transactionCode?: string;
-  paidAt: string; // ISO string
+  
+  confirmedBy?: string; // email of the actor
+  confirmedByRole?: string; // e.g. ADMIN, OPERATOR
+  
   note?: string;
-  createdBy: string;
-  createdAt: string;
+  
+  paidAt?: string; // ISO string
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
 }

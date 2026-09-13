@@ -1,8 +1,9 @@
-import { Route, Vehicle, Driver } from '@/types/fleet';
+import { Route, Vehicle, Driver, Trip } from '@/types/fleet';
 import { Customer } from '@/types/customer';
 import { Booking } from '@/types/booking';
 import { Feedback } from '@/types/feedback';
 import { SystemSettings } from '@/types/automation';
+import { NotificationTemplate } from '@/types/notification';
 import { APP_CONFIG } from '@/lib/constants/config';
 
 export const INITIAL_ROUTES: Route[] = [
@@ -177,6 +178,43 @@ export const INITIAL_DRIVERS: Driver[] = [
     note: 'Chuyên lái xe hợp đồng VIP và gia đình',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+export const INITIAL_TRIPS: Trip[] = [
+  {
+    id: 'trip-01',
+    routeId: 'route-qn-nb',
+    route: 'Quảng Ninh - Ninh Bình',
+    vehicleId: 'veh-01',
+    driverId: 'drv-01',
+    departureDate: '2026-09-12',
+    departureTime: '08:00',
+    arrivalTime: '11:30',
+    status: 'ASSIGNED',
+    bookingIds: ['book-01'],
+    maxSeats: 11,
+    bookedSeats: 2,
+    note: 'Đón khách tại Hạ Long lúc 07:30',
+    createdAt: '2026-09-11T07:15:00.000Z',
+    updatedAt: '2026-09-11T07:15:00.000Z',
+  },
+  {
+    id: 'trip-02',
+    routeId: 'route-hp-tb',
+    route: 'Hải Phòng - Thái Bình',
+    vehicleId: 'veh-02',
+    driverId: 'drv-02',
+    departureDate: '2026-09-12',
+    departureTime: '13:00',
+    arrivalTime: '14:30',
+    status: 'PLANNED',
+    bookingIds: [],
+    maxSeats: 11,
+    bookedSeats: 0,
+    note: 'Chuyến thường nhật buổi chiều',
+    createdAt: '2026-09-11T08:00:00.000Z',
+    updatedAt: '2026-09-11T08:00:00.000Z',
   },
 ];
 
@@ -374,6 +412,62 @@ export const INITIAL_SETTINGS: SystemSettings = {
   workingHours: APP_CONFIG.workingHours,
   feedbackDelayHours: APP_CONFIG.feedbackDelayHours,
   autoSendFeedbackReminder: true,
-  emailNotificationsEnabled: false,
-  updatedAt: '2026-01-01T00:00:00.000Z',
+  notifications: {
+    enabled: true,
+    smsEnabled: true,
+    emailEnabled: true,
+    zaloEnabled: false,
+    inAppEnabled: true,
+  },
+  eventToggles: {
+    bookingCreated: true,
+    bookingConfirmed: true,
+    bookingCancelled: true,
+    depositConfirmed: true,
+    paymentConfirmed: true,
+    vehicleAssigned: true,
+    driverAssigned: true,
+    tripReminder: true,
+    feedbackReminder: true,
+  },
+  automationEnabled: true,
+  maxRetryAttempts: 3,
+  bankCode: 'MB',
+  bankAccountNumber: '0912345678',
+  bankAccountName: 'CONG TY TNHH LIMOUSINE',
+  updatedAt: '2026-09-01T00:00:00.000Z',
 };
+
+export const INITIAL_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
+  {
+    id: 'FEEDBACK_REMINDER_TPL',
+    name: 'Nhắc nhở đánh giá chuyến đi',
+    channel: 'SMS',
+    body: 'Kinh chao quy khach {{customerName}}, cam on quy khach da su dung dich vu cua chung toi. Vui long danh gia chuyen di tai: {{feedbackUrl}}',
+    enabled: true,
+    requiredVariables: ['customerName', 'feedbackUrl'],
+    createdAt: '2026-09-12T00:00:00.000Z',
+    updatedAt: '2026-09-12T00:00:00.000Z',
+  },
+  {
+    id: 'BOOKING_CREATED_SMS_TPL',
+    name: 'Xác nhận đặt vé (SMS)',
+    channel: 'SMS',
+    body: 'Quy khach da dat thanh cong ve {{bookingCode}}. Hanh trinh: {{from}} - {{to}}. Vui long kiem tra email hoac web de biet chi tiet.',
+    enabled: true,
+    requiredVariables: ['bookingCode', 'from', 'to'],
+    createdAt: '2026-09-12T00:00:00.000Z',
+    updatedAt: '2026-09-12T00:00:00.000Z',
+  },
+  {
+    id: 'BOOKING_CREATED_EMAIL_TPL',
+    name: 'Xác nhận đặt vé (Email)',
+    channel: 'EMAIL',
+    subject: 'Xác nhận đặt vé thành công - Mã vé: {{bookingCode}}',
+    body: 'Kính chào {{customerName}},<br/><br/>Quý khách đã đặt vé thành công với mã <b>{{bookingCode}}</b>.<br/>Hành trình: {{from}} - {{to}}.<br/>Ngày khởi hành: {{departureDate}} lúc {{departureTime}}.<br/><br/>Trân trọng.',
+    enabled: true,
+    requiredVariables: ['customerName', 'bookingCode', 'from', 'to', 'departureDate', 'departureTime'],
+    createdAt: '2026-09-12T00:00:00.000Z',
+    updatedAt: '2026-09-12T00:00:00.000Z',
+  }
+];

@@ -1,0 +1,146 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        getUserRole() == 'ADMIN' ||
+        request.auth.token.email == 'admin@limousine.vn'
+      );
+    }
+
+    function isOperator() {
+      return isAuthenticated() && (
+        getUserRole() == 'OPERATOR' ||
+        isAdmin()
+      );
+    }
+
+    // DENY ALL BY DEFAULT
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. BOOKINGS COLLECTION
+    match /bookings/{bookingId} {
+      // Public lookup is now handled by Server Action
+      allow create: if false;
+
+      // Quản trị viên/Điều hành viên được đọc tất cả
+      allow get: if isOperator();
+
+      allow list: if isOperator();
+
+      // Chỉ điều hành viên và Admin được cập nhật trạng thái hoặc xóa
+      allow update: if isOperator();
+      allow delete: if isAdmin();
+    }
+
+    // 2. CUSTOMERS COLLECTION (CRM)
+    // Tuyệt đối không cho public đọc danh sách khách hàng để bảo mật PII
+    match /customers/{customerId} {
+      allow read: if isOperator();
+      allow create: if isOperator() || isAuthenticated();
+      allow update: if isOperator();
+      allow delete: if isAdmin();
+    }
+
+    // 3. VEHICLES COLLECTION
+    match /vehicles/{vehicleId} {
+      allow read: if isOperator();
+      allow write: if isAdmin();
+    }
+
+    // 4. DRIVERS COLLECTION
+    match /drivers/{driverId} {
+      allow read: if isOperator();
+      allow write: if isAdmin();
+    }
+
+    // 5. TRIPS COLLECTION
+    match /trips/{tripId} {
+      allow read: if isOperator();
+      allow write: if isOperator();
+    }
+
+    // 6. FEEDBACKS COLLECTION
+    match /feedbacks/{feedbackId} {
+      allow create: if false; // Server Action handles creation
+      // Public chỉ được đọc các đánh giá đã được duyệt đăng lên website (Testimonials)
+      allow read: if isOperator() || resource.data.isPublishedTestimonial == true;
+      allow update: if isOperator();
+      allow delete: if isAdmin();
+    }
+
+    // 7. AUDIT LOGS (IMMUTABLE)
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if false;
+      allow update, delete: if false; // Không ai được sửa hay xóa audit log
+    }
+
+    // 8. SYSTEM SETTINGS
+    match /systemSettings/{settingId} {
+      allow read: if true; // Cần đọc hotline, giờ làm việc công khai
+      allow write: if isAdmin();
+    }
+
+    // 9. SYSTEM SEQUENCES (ATOMIC COUNTERS)
+    match /systemSequences/{seqId} {
+      allow read, write: if false; // Server Action handles sequences
+    }
+
+    // 10. PAYMENTS
+    match /payments/{paymentId} {
+      allow read: if isOperator();
+      allow create: if false; // Public payment creation moved to Server Action
+      allow update: if isOperator();
+      allow delete: if isAdmin();
+    }
+
+    // 11. INVOICES
+    match /invoices/{invoiceId} {
+      allow read: if isOperator();
+      allow write: if isOperator();
+    }
+
+    // 12. AUTOMATION JOBS
+    match /automationJobs/{jobId} {
+      allow read: if isOperator();
+      allow write: if false; // Only Admin SDK or Server Actions
+    }
+
+    // 13. AUTOMATION EXECUTIONS
+    match /automationExecutions/{execId} {
+      allow read: if isOperator();
+      allow write: if false; // Only Admin SDK or Server Actions
+    }
+
+    // 14. NOTIFICATIONS
+    match /notifications/{notifId} {
+      allow read: if isOperator();
+      allow write: if false; // Only Admin SDK or Server Actions
+    }
+
+    // 15. NOTIFICATION TEMPLATES
+    match /notificationTemplates/{templateId} {
+      allow read: if isOperator();
+      allow write: if false; // Server Actions only
+    }
+
+    // 16. NOTIFICATION DELIVERIES
+    match /notificationDeliveries/{deliveryId} {
+      allow read: if isOperator();
+      allow write: if false; // Server Actions only
+    }
+  }
+}

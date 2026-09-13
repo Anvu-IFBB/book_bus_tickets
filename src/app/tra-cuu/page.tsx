@@ -24,8 +24,7 @@ import {
   RotateCcw,
   Car,
 } from 'lucide-react';
-import { bookingService } from '@/services/bookingService';
-import { Booking } from '@/types/booking';
+import { lookupBookingAction, PublicBookingSummary } from '@/app/actions/lookupActions';
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG, APP_CONFIG } from '@/lib/constants/config';
 import { formatCurrencyVN } from '@/lib/utils/formatters';
 
@@ -36,7 +35,7 @@ export default function TrackingPage() {
   const [phone, setPhone] = useState('');
   const [searchState, setSearchState] = useState<SearchState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [bookingResult, setBookingResult] = useState<Booking | null>(null);
+  const [bookingResult, setBookingResult] = useState<PublicBookingSummary | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,16 +61,16 @@ export default function TrackingPage() {
     setSearchState('loading');
 
     try {
-      // Safe call via BookingService (Phase 1 architecture)
-      const found = await bookingService.lookupBooking(cleanCode, cleanPhone);
+      // Safe call via Server Action (bypassing Firestore rules safely)
+      const res = await lookupBookingAction(cleanCode, cleanPhone);
 
-      if (!found) {
+      if (!res.success || !res.data) {
         setSearchState('notFound');
         setErrorMessage(
-          'Không tìm thấy thông tin đơn hoặc số điện thoại không khớp với mã đơn. Vui lòng kiểm tra lại chính xác!'
+          res.error || 'Không tìm thấy thông tin đơn hoặc số điện thoại không khớp với mã đơn. Vui lòng kiểm tra lại chính xác!'
         );
       } else {
-        setBookingResult(found);
+        setBookingResult(res.data);
         setSearchState('success');
       }
     } catch {

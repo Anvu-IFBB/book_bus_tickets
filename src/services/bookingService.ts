@@ -8,14 +8,16 @@ import { Customer } from '@/types/customer';
 import { getBookingRepository, getCustomerRepository, getSettingsRepository } from '@/repositories';
 import { generateBookingCode, generateCargoCode } from '@/lib/utils/codeGenerator';
 import { normalizePhone } from '@/lib/utils/formatters';
+import { paymentService } from './paymentService';
 
 // Quy tắc chuyển đổi trạng thái hợp lệ
 const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   NEW: ['CONTACTING', 'CONFIRMED', 'CANCELLED'],
   CONTACTING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['DEPOSIT_PAID', 'PAID', 'IN_PROGRESS', 'CANCELLED'],
-  DEPOSIT_PAID: ['PAID', 'IN_PROGRESS', 'CANCELLED'],
-  PAID: ['IN_PROGRESS', 'CANCELLED'],
+  CONFIRMED: ['ASSIGNED', 'DEPOSIT_PAID', 'PAID', 'IN_PROGRESS', 'CANCELLED'],
+  ASSIGNED: ['CONFIRMED', 'IN_PROGRESS', 'CANCELLED'],
+  DEPOSIT_PAID: ['ASSIGNED', 'PAID', 'IN_PROGRESS', 'CANCELLED'],
+  PAID: ['ASSIGNED', 'IN_PROGRESS', 'CANCELLED'],
   IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
   COMPLETED: [], // Trạng thái kết thúc
   CANCELLED: [], // Trạng thái kết thúc
@@ -116,6 +118,9 @@ export class BookingService {
       createdAt: nowIso,
     });
 
+    // Khởi tạo dòng Payment PENDING
+    await paymentService.createPaymentRequest(saved, customer.email || customer.phone);
+
     return saved;
   }
 
@@ -151,7 +156,8 @@ export class BookingService {
     bookingId: string,
     newStatus: BookingStatus,
     changedBy: string,
-    note?: string
+    note?: string,
+    actorRole?: string
   ): Promise<Booking> {
     const booking = await this.bookingRepo.findById(bookingId);
     if (!booking) {
@@ -213,6 +219,7 @@ export class BookingService {
       id: `log-${Date.now()}`,
       userId: changedBy,
       userEmail: changedBy,
+      actorRole: actorRole || 'OPERATOR',
       action: 'BOOKING_STATUS_CHANGED',
       entityType: 'BOOKING',
       entityId: bookingId,

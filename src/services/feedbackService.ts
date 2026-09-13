@@ -4,8 +4,9 @@ import {
   CreateFeedbackDTO,
   NegativeFeedbackStatus,
 } from '@/types/feedback';
-import { getFeedbackRepository, getBookingRepository, getSettingsRepository } from '@/repositories';
+import { getFeedbackRepository, getBookingRepository, getSettingsRepository, getCustomerRepository } from '@/repositories';
 import { normalizePhone } from '@/lib/utils/formatters';
+import { FeedbackFilter } from '@/repositories/interfaces/IFeedbackRepository';
 
 export class FeedbackService {
   private feedbackRepo = getFeedbackRepository();
@@ -21,6 +22,31 @@ export class FeedbackService {
 
     if (!booking) {
       throw new Error(`Không tìm thấy mã chuyến đi: ${dto.bookingCode}`);
+    }
+
+    if (booking.bookingStatus !== 'COMPLETED') {
+      throw new Error('Chuyến đi chưa hoàn thành, chưa thể gửi đánh giá');
+    }
+
+    let hasAccess = false;
+    if (booking.cargoDetails) {
+      const sender = normalizePhone(booking.cargoDetails.senderPhone);
+      const receiver = normalizePhone(booking.cargoDetails.receiverPhone);
+      if (sender === cleanPhone || receiver === cleanPhone) {
+        hasAccess = true;
+      }
+    }
+
+    if (!hasAccess && booking.customerId) {
+      const customerRepo = getCustomerRepository();
+      const customer = await customerRepo.findById(booking.customerId);
+      if (customer && normalizePhone(customer.phone) === cleanPhone) {
+        hasAccess = true;
+      }
+    }
+
+    if (!hasAccess) {
+      throw new Error('Xác thực số điện thoại không hợp lệ cho chuyến đi này');
     }
 
     // Kiểm tra xem booking đã có feedback chưa (Idempotency)
@@ -130,6 +156,13 @@ export class FeedbackService {
     });
 
     return updated;
+  }
+
+  /**
+   * Lấy danh sách đánh giá cho Admin
+   */
+  async getAdminFeedbacks(filter?: { rating?: number; status?: NegativeFeedbackStatus }): Promise<Feedback[]> {
+    return this.feedbackRepo.list(filter as FeedbackFilter);
   }
 }
 

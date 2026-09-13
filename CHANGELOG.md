@@ -3,6 +3,119 @@
 
 Toàn bộ các mốc phát triển, tính năng mới và các bản sửa đổi quan trọng được ghi nhận chi tiết theo từng phiên bản và giai đoạn.
 
+## [Phase 8: Payments & Deposits] - 11/09/2026
+
+### Thêm Mới (Added):
+- **Domain Types (`src/types/payment.ts`, `src/types/invoice.ts`)**: Mở rộng để lưu trữ thông tin giao dịch tài chính (totalAmount, depositAmount, paidAmount, remainingAmount), thông tin xuất hóa đơn và mã tham chiếu.
+- **System Settings (`src/types/automation.ts`)**: Thêm cấu hình ngân hàng (bankCode, bankAccountNumber, bankAccountName) vào SystemSettings.
+- **Repository Layer**: Thêm `IPaymentRepository` & `IInvoiceRepository`. Triển khai MemoryAdapter và FirestoreAdapter. Tích hợp linh hoạt vào RepositoryFactory.
+- **Service Layer**: Thêm `paymentService.ts` và `invoiceService.ts` với đầy đủ logic kiểm soát thanh toán và xuất hóa đơn.
+- **Client UI (Public)**: Nâng cấp component `Step5Success` để fetch thông tin Payment và thiết lập ngân hàng, hiển thị mã QR thanh toán (VietQR).
+- **Admin UI (Dashboard)**:
+  - Cập nhật Authentication Context phân quyền nâng cao cho Payments & Invoices.
+  - Thêm trang Quản lý Danh sách Thanh Toán (`/admin/payments`).
+  - Thêm trang Chi Tiết Thanh Toán (`/admin/payments/[id]`).
+  - Thêm trang Chi Tiết & In Hóa Đơn (`/admin/invoices/[id]`).
+- **Bảo mật**: Cập nhật `firestore.rules` khóa truy cập công khai vào collections `payments` và `invoices`.
+- **Kiểm thử tự động**: Viết test script (`src/lib/test-phase8.ts`) thực thi và kiểm định luồng thanh toán hoàn hảo.
+
+## [Phase 7: Admin Dashboard & Booking Operations] - 11/09/2026
+
+### Thêm Mới (Added):
+- **Bảng Điều Khiển Vận Hành Thực Tế (`/admin`):**
+  - Tính toán 8 chỉ số KPI thời gian thực trực tiếp từ Service Layer: Tổng đơn hôm nay, Cần liên hệ (`NEW`), Đã liên hệ (`CONTACTING`), Đã chốt (`CONFIRMED`), Đã phân xe (`ASSIGNED`), Đang chạy (`IN_PROGRESS`), Hoàn thành (`COMPLETED`), Đã hủy (`CANCELLED`).
+  - Banner Doanh thu thực tế (VNĐ) tính từ các đơn đã xác nhận / đang chạy / hoàn thành.
+  - Cảnh báo vận hành đội xe & tài xế tức thì: Tự động phát hiện phương tiện đang bảo dưỡng (`MAINTENANCE`) và tài xế đang nghỉ ca (`OFF`).
+  - Danh sách đơn cần xử lý gấp lọc các đơn `NEW` và `CONTACTING` kèm thời gian di chuyển sắp tới.
+  - Danh sách các chuyến xe khởi hành hôm nay và trạng thái xuất bến.
+  - Giao diện Empty State chuẩn mực khi hệ thống chưa có dữ liệu (không hiển thị số liệu giả).
+- **Màn Hình Quản Lý Booking Danh Sách (`/admin/bookings`):**
+  - Tìm kiếm đa trường không phân biệt hoa thường: theo Mã đơn (`BK...`/`HG...`), Số điện thoại khách hàng, Tên khách hàng, hoặc Người gửi/nhận hàng.
+  - Bộ lọc đa tiêu chí linh hoạt: Lọc trạng thái (8 trạng thái), Lọc loại hình dịch vụ (4 loại), Lọc tuyến đường di chuyển, Lọc theo ngày khởi hành.
+  - Cơ chế phân trang 10 đơn/trang với bộ chuyển trang trực quan và lựa chọn sắp xếp (Mới nhất, Cũ nhất, Ngày đi sớm nhất).
+  - Bảng dữ liệu Desktop đầy đủ thông tin kèm trạng thái thanh toán (`PaymentStatusBadge`).
+  - Layout Card cho Mobile đáp ứng chuẩn chống tràn ngang (`scrollWidth <= clientWidth`).
+- **Trang Chi Tiết Booking Chuyên Sâu (`/admin/bookings/[id]`):**
+  - Hiển thị đầy đủ thông tin đặt chỗ, thông tin khách hàng CRM, thông tin kiện hàng hoặc dòng xe hợp đồng.
+  - Quản lý tài chính: Giá vé, phụ phí, tiền cọc, tổng tiền và trạng thái thanh toán.
+  - Thông tin phân xe & tài xế phụ trách.
+  - Luân chuyển trạng thái qua State Machine actions (`CONTACTING`, `CONFIRMED`, `ASSIGNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`).
+  - Timeline trực quan ghi nhận toàn bộ lịch sử trạng thái (`statusHistory`).
+- **Mở Rộng Service Layer & Dữ Liệu Vận Hành (`src/services/operationsService.ts`):**
+  - Cung cấp `getOperationsSummary()` tổng hợp dữ liệu thời gian thực.
+  - Cung cấp `listBookingsWithDetails()` hỗ trợ tìm kiếm, lọc, phân trang và enrich thông tin khách hàng, xe, tài xế.
+  - Cung cấp `getBookingDetailsWithEnrichment()`.
+  - Cập nhật các hàm thay đổi trạng thái và phân công chấp nhận `actorRole` và ghi vào `AuditLog`.
+- **Phân Quyền RBAC & Quản Lý Phiên (`src/components/admin/admin-auth-context.tsx`):**
+  - `AdminAuthProvider` & `useAdminAuth` hook quản lý session người dùng, vai trò (`role`) và phân quyền thao tác (`canManageBookings`, `canAssignFleet`, `canModifySettings`, `canDeleteData`).
+  - Hiển thị thông tin người dùng động trên `AdminSidebar` và tích hợp đăng xuất.
+- **Bộ Kiểm Thử Tự Động Toàn Diện (`src/lib/test-phase7.ts`):**
+  - 7 nhóm kiểm thử (A: Metrics, B: Search/Filter/Pagination, C: Detail, D: State Machine, E: Assignment & Conflicts, F: RBAC, G: Audit Log) đạt 100% PASS.
+
+---
+
+## [Phase 6: Database + Authentication + Production Foundation] - 11/09/2026
+
+### Thêm Mới (Added):
+- **Cấu hình & Tích Hợp Firebase Foundation (`src/lib/firebase/`):**
+  - Zod validation cho Client & Admin configs (`config.ts`), cung cấp `isFirebaseConfigured()` và `isFirebaseAdminConfigured()`.
+  - Firebase Client App Singleton (`client.ts`) xuất `getFirebaseAuth()` và `getFirebaseFirestore()`.
+  - Firebase Admin SDK Modular Singleton (`admin.ts`) phục vụ Server-side Token verification và Firestore transactions với xử lý private key newline.
+  - Cập nhật `.env.example` với `REPOSITORY_MODE="memory"` và `FIREBASE_ADMIN_PROJECT_ID`.
+- **Triển Khai Firestore Repositories (`src/repositories/firestore/`):**
+  - `helpers.ts`: Bộ lọc `cleanUndefined` đệ quy bảo vệ Firestore khỏi lỗi `undefined value` và chuyển đổi Timestamps sang ISO strings.
+  - `bookingRepository.ts`: Triển khai đầy đủ `IBookingRepository` với Firestore Transaction trên `systemSequences/daily_{YYYYMMDD}` đảm bảo sinh mã `BK...` và `HG...` tăng dần, duy nhất, không trùng lặp.
+  - `customerRepository.ts`: Tự động tìm kiếm & liên kết khách hàng theo SĐT (Customer CRM Foundation), cộng dồn thống kê với `FieldValue.increment`.
+  - `fleetRepository.ts`: Quản lý 4 collections (`routes`, `vehicles`, `drivers`, `trips`).
+  - `feedbackRepository.ts` & `settingsRepository.ts`: Quản lý `feedbacks`, `systemSettings/general` và `auditLogs` bất biến.
+- **Repository Factory Pattern (`src/repositories/index.ts`):**
+  - Cơ chế chuyển đổi trong suốt giữa In-Memory và Firestore dựa trên `REPOSITORY_MODE` và cấu hình thực tế.
+  - Hỗ trợ `setRepositoryModeForTesting()` cho test tự động độc lập không phụ thuộc credentials cloud.
+- **Hệ Thống Xác Thực & Bảo Vệ Route (`src/middleware.ts`, `/admin/login`, `/api/auth/session`):**
+  - Mở rộng phân quyền `UserRole` (`ADMIN`, `OPERATOR`, `MANAGER`, `STAFF`, `CSKH`, `ACCOUNTANT`, `DRIVER`).
+  - Next.js Middleware chặn toàn bộ truy cập trái phép vào `/admin/*`, điều hướng 307 về `/admin/login?redirect=...`.
+  - API Route `/api/auth/session` cấp phát HttpOnly cookie bảo mật qua Firebase Admin Token Verification (hỗ trợ Dev bypass tiện ích).
+  - Màn hình đăng nhập `/admin/login` chuẩn hoàng gia (Navy `#071A2B` & Gold `#D4AF37`) với Suspense và quick login.
+  - Nút Đăng Xuất (`LogOut`) trên `AdminSidebar` xóa sạch phiên làm việc.
+- **Bảo Mật & Khởi Tạo Dữ Liệu:**
+  - `firestore.rules`: Bộ quy tắc **Deny-by-default** bảo vệ toàn bộ collections, cấp quyền phân tầng theo Role Token (`ADMIN` vs `OPERATOR` vs Public).
+  - `firebase.json`: Cấu hình deploy rules và firestore indexes.
+  - `src/lib/migration/seedData.ts`: Kịch bản nạp dữ liệu mẫu ban đầu (`npm run seed:firestore`).
+- **Kiểm Thử Tự Động Toàn Diện:**
+  - `src/lib/test-phase6.ts` (`npm run test:phase6`): 10 nhóm kịch bản (18 kiểm thử) bao phủ 100% các tính năng.
+- **Tài Liệu Nghiệm Thu:**
+  - Báo cáo hoàn thiện `PHASE_6_REPORT.md` và kế hoạch `PHASE_6_IMPLEMENTATION_PLAN.md`.
+
+---
+
+## [Phase 5: Operations & Fleet Management] - 11/09/2026
+
+### Thêm Mới (Added):
+- **Phân Hệ Quản Trị & Vận Hành Đội Xe (`/admin`):**
+  - `/admin`: Dashboard tổng quan vận hành với 4 KPI Cards (Tổng đơn hôm nay, Cần xử lý, Hoàn thành, Chuyến đang chạy), biểu đồ phân bổ trạng thái xe/tài xế, và bảng đơn mới nhất.
+  - `/admin/bookings`: Màn hình điều hành đơn booking với bộ lọc 4 tiêu chí (Trạng thái, Dịch vụ, Ngày, Từ khóa tìm kiếm), bảng dữ liệu desktop & thẻ bài responsive trên mobile, hỗ trợ deep-link `?code=...`.
+  - `/admin/vehicles`: Màn hình quản lý đội xe 5-29 chỗ, chức năng đổi nhanh trạng thái (Bảo dưỡng/Sẵn sàng), modal thêm xe mới có validate.
+  - `/admin/drivers`: Màn hình quản lý hồ sơ tài xế, quản lý ca trực (Sẵn sàng/Nghỉ ca), modal tạo tài xế kèm số bằng lái & SĐT.
+  - `/admin/trips`: Màn hình điều phối chuyến xe, trạng thái chuyến (`PLANNED`, `ASSIGNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`), xuất bến/hoàn thành chuyến, modal tạo chuyến mới.
+- **Components Admin Chuyên Dụng (`src/components/admin/`):**
+  - `AdminSidebar` & `AdminHeader`: Điều hướng nhất quán, menu mobile drawer, hiển thị thời gian thực và nút làm mới dữ liệu.
+  - `BookingDetailDrawer`: Khung trượt chi tiết hiển thị khách hàng, lộ trình đón trả, timeline luân chuyển trạng thái, và các nút điều phối nhanh.
+  - `AssignVehicleModal` & `AssignDriverModal`: Cửa sổ phân công tích hợp kiểm tra xung đột thời gian thực (Real-time Conflict Checking).
+  - `KpiStatCard` & `StatusBadges`: Bộ hiển thị chỉ số và huy hiệu trạng thái đồng bộ toàn hệ thống.
+- **Service Layer & Conflict Detection Engine:**
+  - `fleetService.ts`: CRUD xe, tài xế, chuyến và bộ máy phát hiện xung đột lịch (`detectVehicleConflict`, `detectDriverConflict`) ngăn chặn double booking, kiểm tra bảo dưỡng và ngày nghỉ.
+  - `operationsService.ts`: Vận hành vòng đời booking, chuyển trạng thái theo State Machine, phân công xe & tài xế, tự động ghi nhận `statusHistory` và `AuditLog`.
+- **Mở Rộng Domain & Repositories:**
+  - Bổ sung trạng thái `ASSIGNED` vào `BookingStatus`, mở rộng `VehicleStatus`, `DriverStatus`, `TripStatus`.
+  - Bổ sung `IFleetRepository` (với `deleteVehicle`, `deleteDriver`, `deleteTrip`) và mock data chuyến khởi tạo `INITIAL_TRIPS`.
+- **Kiểm Thử Tự Động & Quality Gates:**
+  - Bộ kiểm thử tự động `src/lib/test-phase5.ts` (`npm run test:phase5`) với 16 kịch bản kiểm thử bao phủ 100% các tính năng.
+  - Vượt qua toàn bộ kiểm thử hồi quy `test:phase1` và `test:phase4`.
+  - Không có lỗi TypeScript (`tsc --noEmit`) và ESLint (`0 errors, 0 warnings`).
+  - Production build thành công 17/17 static pages.
+- **Tài Liệu Nghiệm Thu:**
+  - Báo cáo nghiệm thu hoàn chỉnh `PHASE_5_REPORT.md`.
+
 ---
 
 ## [Phase 4: Booking Engine & Client Flow] - 11/09/2026

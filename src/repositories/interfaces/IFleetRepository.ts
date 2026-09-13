@@ -12,16 +12,20 @@ export interface IFleetRepository {
   getVehicleById(id: string): Promise<Vehicle | null>;
   createVehicle(vehicle: Vehicle): Promise<Vehicle>;
   updateVehicle(id: string, updates: Partial<Vehicle>): Promise<Vehicle>;
+  deleteVehicle(id: string): Promise<boolean>;
 
   // Drivers
   listDrivers(status?: DriverStatus): Promise<Driver[]>;
   getDriverById(id: string): Promise<Driver | null>;
   createDriver(driver: Driver): Promise<Driver>;
   updateDriver(id: string, updates: Partial<Driver>): Promise<Driver>;
+  deleteDriver(id: string): Promise<boolean>;
 
   // Trips
   listTrips(date?: string, status?: TripStatus): Promise<Trip[]>;
   getTripById(id: string): Promise<Trip | null>;
   createTrip(trip: Trip): Promise<Trip>;
   updateTrip(id: string, updates: Partial<Trip>): Promise<Trip>;
+  deleteTrip(id: string): Promise<boolean>;
 }
+

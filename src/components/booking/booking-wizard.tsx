@@ -9,7 +9,7 @@ import { Step2Trip } from './steps/step2-trip';
 import { Step3Customer } from './steps/step3-customer';
 import { Step4Review } from './steps/step4-review';
 import { Step5Success } from './steps/step5-success';
-import { bookingService } from '@/services/bookingService';
+import { createBookingAction } from '@/app/actions/bookingActions';
 import {
   limousineBookingSchema,
   contractBookingSchema,
@@ -208,14 +208,18 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
         };
       }
 
-      // 3. Call BookingService to create booking in repository
-      const created = await bookingService.createBooking(dto);
+      // 3. Call Server Action to create booking securely
+      const result = await createBookingAction(dto);
+      
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Lỗi khi tạo đặt chỗ');
+      }
 
-      setCreatedBooking(created);
+      setCreatedBooking(result.data);
       setStep(5);
 
       if (onSuccess) {
-        onSuccess(created);
+        onSuccess(result.data);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Đã xảy ra lỗi không xác định khi tạo đặt chỗ';

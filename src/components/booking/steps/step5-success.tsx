@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Booking } from '@/types/booking';
+
+import { SystemSettings } from '@/types/automation';
+import { getPaymentByBookingIdAction, getSystemSettingsAction, PublicPaymentSummary } from '@/app/actions/clientQueries';
 import { Card, CardContent, Button, Badge } from '@/components/ui';
 import { APP_CONFIG, BOOKING_STATUS_CONFIG } from '@/lib/constants/config';
 import {
@@ -23,6 +26,30 @@ export interface Step5SuccessProps {
 
 export const Step5Success: React.FC<Step5SuccessProps> = ({ booking, onReset }) => {
   const [copied, setCopied] = useState(false);
+  const [payment, setPayment] = useState<PublicPaymentSummary | null>(null);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const [isNotifying, setIsNotifying] = useState(false);
+  const [notified, setNotified] = useState(false);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [payRes, setRes] = await Promise.all([
+          getPaymentByBookingIdAction(booking.id),
+          getSystemSettingsAction()
+        ]);
+        if (payRes.success && payRes.data) {
+          setPayment(payRes.data);
+        }
+        if (setRes.success && setRes.data) {
+          setSettings(setRes.data as SystemSettings);
+        }
+      } catch (err) {
+        console.error('Failed to load payment or settings', err);
+      }
+    };
+    fetchData();
+  }, [booking.id]);
 
   const handleCopy = () => {
     if (navigator.clipboard) {
@@ -153,6 +180,80 @@ export const Step5Success: React.FC<Step5SuccessProps> = ({ booking, onReset }) 
           </div>
         </div>
       </div>
+
+      {/* PAYMENT & QR SECTION */}
+      {payment && settings?.bankCode && settings?.bankAccountNumber && (
+        <Card className="border-emerald-500/30 shadow-md overflow-hidden">
+          <div className="bg-emerald-50 px-4 py-3 border-b border-emerald-100 flex items-center justify-between">
+            <h3 className="font-bold text-emerald-800 flex items-center gap-2">
+              Thông Tin Thanh Toán
+            </h3>
+            <Badge variant="navy">{payment.status}</Badge>
+          </div>
+          <CardContent className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-500">Tổng tiền:</span>
+                <span className="font-bold">{payment.totalAmount.toLocaleString()} VNĐ</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-500">Đã thanh toán (Cọc):</span>
+                <span className="font-bold text-emerald-600">{payment.paidAmount.toLocaleString()} VNĐ</span>
+              </div>
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-100">
+                <span className="text-slate-700 font-medium">Số tiền cần thanh toán:</span>
+                <span className="font-black text-lg text-red-600">
+                  {payment.remainingAmount > 0 ? payment.remainingAmount.toLocaleString() : 0} VNĐ
+                </span>
+              </div>
+
+              {payment.remainingAmount > 0 && (
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm space-y-2">
+                  <p><span className="text-slate-500">Ngân hàng:</span> <strong className="ml-1">{settings.bankCode}</strong></p>
+                  <p><span className="text-slate-500">Số tài khoản:</span> <strong className="ml-1">{settings.bankAccountNumber}</strong></p>
+                  <p><span className="text-slate-500">Chủ tài khoản:</span> <strong className="ml-1">{settings.bankAccountName}</strong></p>
+                  <p><span className="text-slate-500">Nội dung CK:</span> <strong className="ml-1">{booking.bookingCode}</strong></p>
+                </div>
+              )}
+
+              {payment.remainingAmount > 0 && (
+                <Button 
+                  variant={notified ? "outline" : "primary"}
+                  fullWidth
+                  disabled={isNotifying || notified}
+                  onClick={() => {
+                    setIsNotifying(true);
+                    setTimeout(() => {
+                      setIsNotifying(false);
+                      setNotified(true);
+                      alert('Cảm ơn bạn! Chúng tôi đã ghi nhận thông báo chuyển khoản và sẽ kiểm tra trong ít phút.');
+                    }, 800);
+                  }}
+                >
+                  {isNotifying ? 'Đang gửi...' : (notified ? 'Đã Gửi Thông Báo' : 'Tôi Đã Chuyển Khoản')}
+                </Button>
+              )}
+            </div>
+
+            {payment.remainingAmount > 0 && (
+              <div className="flex flex-col items-center justify-center space-y-2 border-l-0 md:border-l md:border-slate-100 md:pl-6">
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Quét mã QR để thanh toán</p>
+                <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={`https://img.vietqr.io/image/${settings.bankCode}-${settings.bankAccountNumber}-compact.png?amount=${payment.remainingAmount}&addInfo=${booking.bookingCode}&accountName=${encodeURIComponent(settings.bankAccountName || '')}`} 
+                    alt="VietQR"
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 text-center">
+                  Mở ứng dụng ngân hàng và quét mã để điền tự động số tiền & nội dung
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* ACTION BUTTONS */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">

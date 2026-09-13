@@ -1,4 +1,4 @@
-import { BookingStatus, PaymentStatus } from '@/types/booking';
+import { BookingStatus, BookingPaymentStatus } from '@/types/booking';
 import { VehicleStatus, DriverStatus, TripStatus } from '@/types/fleet';
 import { NegativeFeedbackStatus } from '@/types/feedback';
 
@@ -102,6 +102,11 @@ export const BOOKING_STATUS_CONFIG: Record<
     badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     stepIndex: 3,
   },
+  ASSIGNED: {
+    label: 'Đã phân xe & tài xế',
+    badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
+    stepIndex: 4,
+  },
   DEPOSIT_PAID: {
     label: 'Đã đặt cọc',
     badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
@@ -130,7 +135,7 @@ export const BOOKING_STATUS_CONFIG: Record<
 };
 
 export const PAYMENT_STATUS_CONFIG: Record<
-  PaymentStatus,
+  BookingPaymentStatus,
   { label: string; badgeClass: string }
 > = {
   UNPAID: { label: 'Chưa thanh toán', badgeClass: 'bg-slate-100 text-slate-700' },
@@ -144,7 +149,8 @@ export const VEHICLE_STATUS_CONFIG: Record<
   { label: string; badgeClass: string }
 > = {
   AVAILABLE: { label: 'Sẵn sàng đón khách', badgeClass: 'bg-emerald-100 text-emerald-800' },
-  ASSIGNED: { label: 'Đang chạy chuyến', badgeClass: 'bg-blue-100 text-blue-800' },
+  ASSIGNED: { label: 'Đã phân công', badgeClass: 'bg-blue-100 text-blue-800' },
+  IN_SERVICE: { label: 'Đang chạy trên đường', badgeClass: 'bg-indigo-100 text-indigo-800' },
   MAINTENANCE: { label: 'Đang bảo dưỡng định kỳ', badgeClass: 'bg-amber-100 text-amber-800' },
   INACTIVE: { label: 'Ngừng hoạt động', badgeClass: 'bg-slate-200 text-slate-600' },
 };
@@ -153,9 +159,12 @@ export const DRIVER_STATUS_CONFIG: Record<
   DriverStatus,
   { label: string; badgeClass: string }
 > = {
-  ACTIVE: { label: 'Sẵn sàng lái xe', badgeClass: 'bg-emerald-100 text-emerald-800' },
-  ON_TRIP: { label: 'Đang trên hành trình', badgeClass: 'bg-blue-100 text-blue-800' },
-  OFF_DUTY: { label: 'Nghỉ ca', badgeClass: 'bg-slate-100 text-slate-700' },
+  AVAILABLE: { label: 'Sẵn sàng nhận chuyến', badgeClass: 'bg-emerald-100 text-emerald-800' },
+  ACTIVE: { label: 'Sẵn sàng nhận chuyến', badgeClass: 'bg-emerald-100 text-emerald-800' },
+  ASSIGNED: { label: 'Đã phân công', badgeClass: 'bg-blue-100 text-blue-800' },
+  ON_TRIP: { label: 'Đang trên hành trình', badgeClass: 'bg-indigo-100 text-indigo-800' },
+  OFF: { label: 'Nghỉ ca / Nghỉ phép', badgeClass: 'bg-slate-100 text-slate-700' },
+  OFF_DUTY: { label: 'Nghỉ ca / Nghỉ phép', badgeClass: 'bg-slate-100 text-slate-700' },
   INACTIVE: { label: 'Tạm ngừng công tác', badgeClass: 'bg-rose-100 text-rose-700' },
 };
 
@@ -164,6 +173,8 @@ export const TRIP_STATUS_CONFIG: Record<
   { label: string; badgeClass: string }
 > = {
   PLANNED: { label: 'Lên kế hoạch', badgeClass: 'bg-slate-100 text-slate-700' },
+  ASSIGNED: { label: 'Đã phân xe & tài xế', badgeClass: 'bg-purple-100 text-purple-800' },
+  IN_PROGRESS: { label: 'Đang di chuyển', badgeClass: 'bg-indigo-100 text-indigo-800' },
   CONFIRMED: { label: 'Đã chốt danh sách', badgeClass: 'bg-blue-100 text-blue-800' },
   DEPARTED: { label: 'Đã xuất bến', badgeClass: 'bg-cyan-100 text-cyan-800' },
   COMPLETED: { label: 'Đã đến nơi an toàn', badgeClass: 'bg-emerald-100 text-emerald-800' },

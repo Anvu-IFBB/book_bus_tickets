@@ -331,6 +331,39 @@ Luồng hoạt động tự động tuân thủ nguyên tắc:
 - Dữ liệu mật khẩu tài khoản Admin được bảo vệ bởi Firebase Authentication mã hóa hash an toàn.
 - Form submit công khai được trang bị Honeypot field và Server-side Rate Limiting chống spam đơn ảo.
 
+### 7.3. Luồng Xác Thực Quản Trị & Middleware Route Protection (Phase 6)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as Quản Trị Viên / Điều Hành
+    participant Browser as Client Browser
+    participant Middleware as Next.js Middleware (/admin/*)
+    participant AuthAPI as API /api/auth/session
+    participant AdminSDK as Firebase Admin Auth
+    participant AdminUI as /admin Dashboard
+
+    Admin->>Browser: Truy cập /admin/bookings
+    Browser->>Middleware: Request GET /admin/bookings
+    alt Không có Cookie admin_session
+        Middleware-->>Browser: Redirect 307 -> /admin/login?redirect=/admin/bookings
+    else Có Cookie admin_session
+        Middleware->>AdminUI: Cho phép truy cập (NextResponse.next())
+    end
+
+    Admin->>Browser: Nhập Email / Mật khẩu tại /admin/login
+    Browser->>AuthAPI: POST { idToken } hoặc credentials
+    AuthAPI->>AdminSDK: verifyIdToken(idToken)
+    AdminSDK-->>AuthAPI: Decoded Claims (uid, email, role)
+    AuthAPI-->>Browser: Set-Cookie: admin_session=...; HttpOnly; SameSite=Lax; Secure
+    Browser->>AdminUI: Điều hướng vào Dashboard
+```
+
+### 7.4. Kiến Trúc Repository Factory & Firestore Adapters (Phase 6)
+- **Repository Factory:** Điều phối động giữa In-Memory (`MemoryRepository`) và Google Cloud Firestore (`FirestoreRepository`) dựa trên `REPOSITORY_MODE` và trạng thái cấu hình `isFirebaseConfigured()`.
+- **Atomic Counter Generation:** Tận dụng `runTransaction` của Firestore trên document `systemSequences/daily_{YYYYMMDD}` để sinh mã đơn `BKYYYYMMDDXXXX` và `HGYYYYMMDDXXXX` tăng dần nguyên tử, ngăn chặn hoàn toàn race condition khi nhiều khách đặt vé cùng lúc.
+- **Customer CRM Deduplication:** Tự động tra cứu collection `customers` theo SĐT chuẩn hóa (normalized phone); nếu đã tồn tại, liên kết booking vào hồ sơ sẵn có và tăng bộ đếm bằng `FieldValue.increment`.
+- **Firestore Security Rules:** Mô hình **Deny-by-default**, chặn hoàn toàn đọc/ghi trực tiếp từ phía client ngoại trừ việc tạo đơn mới hợp lệ và gửi feedback. Toàn bộ thao tác cập nhật trạng thái, phân công xe/tài xế yêu cầu Token có Role `ADMIN` hoặc `OPERATOR`.
+
 ---
 
 ## 8. HỆ THỐNG GIAO DIỆN & RESPONSIVE (DESIGN SYSTEM & UX)

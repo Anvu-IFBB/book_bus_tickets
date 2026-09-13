@@ -4,13 +4,21 @@ export type BookingStatus =
   | 'NEW'
   | 'CONTACTING'
   | 'CONFIRMED'
+  | 'ASSIGNED'
   | 'DEPOSIT_PAID'
   | 'PAID'
   | 'IN_PROGRESS'
   | 'COMPLETED'
   | 'CANCELLED';
 
-export type PaymentStatus = 'UNPAID' | 'DEPOSIT_PAID' | 'PAID' | 'REFUNDED';
+export type BookingPaymentStatus = 'UNPAID' | 'DEPOSIT_PAID' | 'PAID' | 'REFUNDED';
+
+export interface BookingFilter {
+  status?: BookingStatus;
+  serviceType?: BookingServiceType;
+  date?: string;
+  search?: string;
+}
 
 export interface BookingStatusHistoryItem {
   status: BookingStatus;
@@ -63,7 +71,7 @@ export interface Booking {
   tripId?: string;
   price: number; // VNĐ
   deposit: number; // VNĐ
-  paymentStatus: PaymentStatus;
+  paymentStatus: BookingPaymentStatus;
   bookingStatus: BookingStatus;
   note?: string;
 

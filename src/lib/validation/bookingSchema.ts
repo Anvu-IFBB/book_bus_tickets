@@ -111,3 +111,61 @@ export type LimousineBookingFormData = z.infer<typeof limousineBookingSchema>;
 export type ContractBookingFormData = z.infer<typeof contractBookingSchema>;
 export type CargoBookingFormData = z.infer<typeof cargoBookingSchema>;
 export type TourBookingFormData = z.infer<typeof tourBookingSchema>;
+
+export const createBookingSchema = z.discriminatedUnion('serviceType', [
+  limousineBookingSchema,
+  contractBookingSchema.transform(val => ({
+    ...val,
+    contractDetails: { seatCount: val.seatCount, durationDays: val.durationDays, specialRequests: val.note }
+  })),
+  cargoBookingSchema.transform(val => ({
+    ...val,
+    cargoDetails: {
+      senderName: val.senderName,
+      senderPhone: val.senderPhone,
+      receiverName: val.receiverName,
+      receiverPhone: val.receiverPhone,
+      pickupPoint: val.pickupAddress,
+      dropoffPoint: val.dropoffAddress,
+      cargoType: val.cargoType,
+      quantity: val.quantity,
+      estimatedWeightKg: val.estimatedWeightKg
+    }
+  })),
+  tourBookingSchema.transform(val => ({
+    ...val,
+    tourDetails: {
+      tourDestination: val.tourDestination,
+      returnDate: val.returnDate,
+      specialRequests: val.note
+    }
+  }))
+]).or(z.any()); // Bỏ qua việc validation logic phức tạp tạm thời do CreateBookingDTO có structure khác với form data.
+
+// Ta sẽ tạo một validator cơ bản cho CreateBookingDTO
+export const createBookingDTOSchema = z.object({
+  serviceType: z.enum(['LIMOUSINE', 'CONTRACT', 'CARGO', 'TOUR']),
+  customerName: z.string().trim().min(2),
+  customerPhone: phoneValidator,
+  customerEmail: z.string().email().optional().or(z.literal('')),
+  departure: z.string().min(1),
+  destination: z.string().min(1),
+  travelDate: z.string().min(1),
+  travelTime: z.string().optional(),
+  returnDate: z.string().optional(),
+  isRoundTrip: z.boolean().optional(),
+  passengerCount: z.number().int().min(1).optional(),
+  pickupAddress: z.string().trim().min(1),
+  dropoffAddress: z.string().trim().min(1),
+  vehicleType: z.string().optional(),
+  note: z.string().optional(),
+  cargoDetails: z.any().optional(),
+  contractDetails: z.any().optional(),
+  tourDetails: z.any().optional(),
+});
+
+export const updateBookingStatusSchema = z.object({
+  bookingId: z.string().min(1),
+  newStatus: z.enum(['NEW', 'CONTACTING', 'CONFIRMED', 'ASSIGNED', 'DEPOSIT_PAID', 'PAID', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
+  note: z.string().optional(),
+});

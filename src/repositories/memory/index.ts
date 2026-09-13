@@ -16,6 +16,7 @@ import {
   INITIAL_ROUTES,
   INITIAL_VEHICLES,
   INITIAL_DRIVERS,
+  INITIAL_TRIPS,
   INITIAL_FEEDBACK,
   INITIAL_SETTINGS,
 } from './mockData';
@@ -181,7 +182,7 @@ export class MemoryFleetRepository implements IFleetRepository {
   private routes: Route[] = [...INITIAL_ROUTES];
   private vehicles: Vehicle[] = [...INITIAL_VEHICLES];
   private drivers: Driver[] = [...INITIAL_DRIVERS];
-  private trips: Trip[] = [];
+  private trips: Trip[] = [...INITIAL_TRIPS];
 
   // Routes
   async listRoutes(activeOnly: boolean = false): Promise<Route[]> {
@@ -231,6 +232,12 @@ export class MemoryFleetRepository implements IFleetRepository {
     return { ...this.vehicles[index] };
   }
 
+  async deleteVehicle(id: string): Promise<boolean> {
+    const prevLen = this.vehicles.length;
+    this.vehicles = this.vehicles.filter((v) => v.id !== id);
+    return this.vehicles.length < prevLen;
+  }
+
   // Drivers
   async listDrivers(status?: DriverStatus): Promise<Driver[]> {
     if (status) return this.drivers.filter((d) => d.status === status);
@@ -252,6 +259,12 @@ export class MemoryFleetRepository implements IFleetRepository {
     if (index === -1) throw new Error(`Tài xế ${id} không tồn tại`);
     this.drivers[index] = { ...this.drivers[index], ...updates, updatedAt: new Date().toISOString() };
     return { ...this.drivers[index] };
+  }
+
+  async deleteDriver(id: string): Promise<boolean> {
+    const prevLen = this.drivers.length;
+    this.drivers = this.drivers.filter((d) => d.id !== id);
+    return this.drivers.length < prevLen;
   }
 
   // Trips
@@ -277,6 +290,12 @@ export class MemoryFleetRepository implements IFleetRepository {
     if (index === -1) throw new Error(`Chuyến ${id} không tồn tại`);
     this.trips[index] = { ...this.trips[index], ...updates, updatedAt: new Date().toISOString() };
     return { ...this.trips[index] };
+  }
+
+  async deleteTrip(id: string): Promise<boolean> {
+    const prevLen = this.trips.length;
+    this.trips = this.trips.filter((t) => t.id !== id);
+    return this.trips.length < prevLen;
   }
 }
 
@@ -349,3 +368,12 @@ export class MemorySettingsRepository implements ISettingsRepository {
     return result;
   }
 }
+
+export * from './paymentRepository';
+export * from './invoiceRepository';
+export * from './MemoryAutomationRepository';
+export * from './MemoryNotificationRepository';
+export * from './MemoryNotificationTemplateRepository';
+export * from './MemoryNotificationDeliveryRepository';
+export * from './MemoryAnalyticsRepository';
+export * from './MemoryAnalyticsSummaryRepository';

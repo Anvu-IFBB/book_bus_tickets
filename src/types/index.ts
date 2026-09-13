@@ -3,5 +3,7 @@ export * from './customer';
 export * from './fleet';
 export * from './payment';
 export * from './feedback';
+export * from './invoice';
 export * from './automation';
+export * from './notification';
 export * from './auth';
