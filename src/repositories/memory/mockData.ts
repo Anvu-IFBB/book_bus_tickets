@@ -435,6 +435,17 @@ export const INITIAL_SETTINGS: SystemSettings = {
   bankCode: 'MB',
   bankAccountNumber: '0912345678',
   bankAccountName: 'CONG TY TNHH LIMOUSINE',
+  pricingConfig: {
+    limousineBasePrice: 250000,
+    cargoBasePriceUnder5kg: 100000,
+    cargoBasePriceUnder10kg: 150000,
+    cargoExtraPerKg: 10000,
+    contractPricePerDayUnder7Seats: 1500000,
+    contractPricePerDayUnder11Seats: 2500000,
+    contractPricePerDayUnder16Seats: 3500000,
+    contractPricePerDayOver16Seats: 5000000,
+    tourBasePrice: 350000,
+  },
   updatedAt: '2026-09-01T00:00:00.000Z',
 };
 

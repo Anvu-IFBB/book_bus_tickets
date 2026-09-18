@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BookingFormData } from '../types';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Alert } from '@/components/ui';
 import {
@@ -13,7 +13,12 @@ import {
   FileText,
   ShieldCheck,
   Send,
+  CreditCard,
 } from 'lucide-react';
+import { calculateEstimatedPrice } from '@/lib/utils/pricingEngine';
+import { formatCurrencyVN } from '@/lib/utils/formatters';
+import { getSettingsAction } from '@/app/actions/settingsActions';
+import { PricingConfig } from '@/types/automation';
 
 export interface Step4ReviewProps {
   formData: BookingFormData;
@@ -37,7 +42,26 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
   onConfirm,
   onBack,
 }) => {
+  const [pricingConfig, setPricingConfig] = useState<PricingConfig | undefined>();
+
+  useEffect(() => {
+    let ignore = false;
+    getSettingsAction().then((res) => {
+      if (!ignore && res.success && res.data) {
+        setPricingConfig(res.data.pricingConfig);
+      }
+    });
+    return () => { ignore = true; };
+  }, []);
+
   const isCargo = formData.serviceType === 'CARGO';
+  const estimatedPrice = calculateEstimatedPrice({
+    serviceType: formData.serviceType,
+    passengerCount: formData.passengerCount,
+    isRoundTrip: formData.isRoundTrip,
+    contractDetails: { seatCount: formData.seatCount, durationDays: formData.durationDays },
+    cargoDetails: { estimatedWeightKg: formData.cargoWeightKg },
+  } as Partial<import('@/types/booking').CreateBookingDTO>, pricingConfig);
 
   return (
     <div className="space-y-6 animate-in fade-in">
@@ -252,6 +276,21 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      <div className="p-4 rounded-xl border-2 border-emerald-500 bg-white shadow-sm flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+            <CreditCard className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <div className="text-xs text-slate-500 font-medium">Tá»•ng giÃ¡ vÃ© dá»± kiáº¿n:</div>
+            <div className="text-sm text-slate-500">Thanh toÃ¡n khi lÃªn xe</div>
+          </div>
+        </div>
+        <div className="text-xl sm:text-2xl font-black text-emerald-600">
+          {estimatedPrice > 0 ? formatCurrencyVN(estimatedPrice) : 'LiÃªn há»‡'}
+        </div>
+      </div>
 
       <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2.5">
         <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />

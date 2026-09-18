@@ -1,4 +1,4 @@
-import { DocumentSnapshot, Timestamp } from 'firebase/firestore';
+import { DocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
 
 /**
  * Loại bỏ các thuộc tính có giá trị undefined trong object
@@ -25,7 +25,7 @@ export function cleanUndefined<T extends Record<string, unknown>>(obj: T): Parti
  * Chuyển đổi Firestore document snapshot sang entity
  */
 export function docToEntity<T>(doc: DocumentSnapshot): T | null {
-  if (!doc.exists()) return null;
+  if (!doc.exists) return null;
   const data = doc.data();
   if (!data) return null;
 

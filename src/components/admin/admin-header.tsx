@@ -3,11 +3,11 @@
 import React from 'react';
 import { Menu, RefreshCw, Clock } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { useAdminLayout } from '@/app/admin/admin-layout-shell';
 
 interface AdminHeaderProps {
   title: string;
   description?: string;
-  onMenuClick: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
   actions?: React.ReactNode;
@@ -16,11 +16,11 @@ interface AdminHeaderProps {
 export function AdminHeader({
   title,
   description,
-  onMenuClick,
   onRefresh,
   isRefreshing = false,
   actions,
 }: AdminHeaderProps) {
+  const { openSidebar } = useAdminLayout();
   const [currentDateTime, setCurrentDateTime] = React.useState<string>('');
 
   React.useEffect(() => {
@@ -47,7 +47,7 @@ export function AdminHeader({
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
-          onClick={onMenuClick}
+          onClick={openSidebar}
           className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-700 hover:text-navy-900 rounded-lg hover:bg-slate-100 transition-colors"
           aria-label="Mở menu điều hướng quản trị"
         >

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         lastLoginAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       };
-    } else if (devBypass || !isFirebaseAdminConfigured()) {
+    } else if (process.env.NODE_ENV !== 'production' && (devBypass || !isFirebaseAdminConfigured())) {
       // 2. Chế độ Local Dev / Fallback khi chưa có credentials Firebase
       // Kiểm tra mật khẩu demo cơ bản
       if (password && password !== 'admin123' && password !== 'operator123') {

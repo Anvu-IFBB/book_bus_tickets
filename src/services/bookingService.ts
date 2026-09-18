@@ -8,6 +8,7 @@ import { Customer } from '@/types/customer';
 import { getBookingRepository, getCustomerRepository, getSettingsRepository } from '@/repositories';
 import { generateBookingCode, generateCargoCode } from '@/lib/utils/codeGenerator';
 import { normalizePhone } from '@/lib/utils/formatters';
+import { calculateEstimatedPrice } from '@/lib/utils/pricingEngine';
 import { paymentService } from './paymentService';
 
 // Quy tắc chuyển đổi trạng thái hợp lệ
@@ -40,7 +41,7 @@ export class BookingService {
     let customer = await this.customerRepo.findByPhone(cleanPhone);
     if (!customer) {
       const newCustomer: Customer = {
-        id: `cust-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        id: `cust-${Date.now()}-${crypto.randomUUID().split('-')[0]}`,
         name: dto.customerName.trim(),
         phone: cleanPhone,
         email: dto.customerEmail?.trim(),
@@ -55,18 +56,37 @@ export class BookingService {
       };
       customer = await this.customerRepo.create(newCustomer);
     } else {
+      // Kiểm tra spam/trùng lặp
+      const recentBookings = await this.bookingRepo.findByCustomerId(customer.id);
+      const recentDuplicate = recentBookings.find(
+        (b) =>
+          b.serviceType === dto.serviceType &&
+          b.travelDate === dto.travelDate &&
+          b.departure === dto.departure &&
+          b.destination === dto.destination &&
+          b.bookingStatus !== 'CANCELLED' &&
+          (Date.now() - new Date(b.createdAt).getTime()) < 5 * 60 * 1000 // 5 phút
+      );
+
+      if (recentDuplicate) {
+        throw new Error('Bạn đã đặt tuyến đường này rồi. Vui lòng chờ tổng đài xác nhận hoặc thử lại sau 5 phút.');
+      }
+
       // Cập nhật thống kê khách hàng
       await this.customerRepo.incrementStats(customer.id, 1, 0, 0, 0);
     }
 
-    // 2. Sinh mã Booking an toàn
+    // 2. Lấy SystemSettings để tính giá chính xác
+    const settings = await this.settingsRepo.getSettings();
+
+    // 3. Sinh mã Booking an toàn
     const seq = await this.bookingRepo.getNextSequenceForDate(todayYmd);
     const bookingCode =
       dto.serviceType === 'CARGO'
         ? generateCargoCode(new Date(), seq)
         : generateBookingCode(new Date(), seq);
 
-    // 3. Khởi tạo lịch sử trạng thái
+    // 4. Khởi tạo lịch sử trạng thái
     const initialHistory: BookingStatusHistoryItem = {
       status: 'NEW',
       changedAt: nowIso,
@@ -74,9 +94,9 @@ export class BookingService {
       note: 'Khách gửi yêu cầu từ website',
     };
 
-    // 4. Tạo thực thể Booking
+    // 5. Tạo thực thể Booking
     const booking: Booking = {
-      id: `book-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      id: `book-${Date.now()}-${crypto.randomUUID().split('-')[0]}`,
       bookingCode,
       customerId: customer.id,
       serviceType: dto.serviceType,
@@ -90,7 +110,7 @@ export class BookingService {
       pickupAddress: dto.pickupAddress,
       dropoffAddress: dto.dropoffAddress,
       vehicleType: dto.vehicleType,
-      price: 0, // Admin sẽ xác nhận hoặc hệ thống tính theo bảng giá
+      price: calculateEstimatedPrice(dto, settings.pricingConfig),
       deposit: 0,
       paymentStatus: 'UNPAID',
       bookingStatus: 'NEW',
@@ -226,6 +246,59 @@ export class BookingService {
       fromState: currentStatus,
       toState: newStatus,
       metadata: { note },
+      createdAt: nowIso,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Cập nhật trạng thái thanh toán của Booking
+   */
+  async updatePaymentStatus(
+    bookingId: string,
+    newPaymentStatus: Booking['paymentStatus'],
+    changedBy: string,
+    actorRole?: string
+  ): Promise<Booking> {
+    const booking = await this.bookingRepo.findById(bookingId);
+    if (!booking) {
+      throw new Error(`Không tìm thấy đơn booking ID: ${bookingId}`);
+    }
+
+    if (booking.paymentStatus === newPaymentStatus) {
+      return booking;
+    }
+
+    const nowIso = new Date().toISOString();
+    
+    // Nếu trạng thái mới là PAID hoặc PARTIAL, có thể tự động cập nhật deposit nếu cần, nhưng tạm thời chỉ đổi status
+    // Có thể bổ sung history event nếu cần
+    const historyItem: BookingStatusHistoryItem = {
+      status: booking.bookingStatus,
+      changedAt: nowIso,
+      changedBy,
+      note: `Cập nhật thanh toán: ${booking.paymentStatus} -> ${newPaymentStatus}`,
+    };
+
+    const updates: Partial<Booking> = {
+      paymentStatus: newPaymentStatus,
+      statusHistory: [...booking.statusHistory, historyItem],
+      updatedAt: nowIso,
+    };
+
+    const updated = await this.bookingRepo.update(bookingId, updates);
+
+    // Ghi audit log
+    await this.settingsRepo.createAuditLog({
+      id: `log-${Date.now()}`,
+      userId: changedBy,
+      userEmail: changedBy,
+      actorRole: actorRole || 'ADMIN',
+      action: 'PAYMENT_STATUS_CHANGED',
+      entityType: 'BOOKING',
+      entityId: bookingId,
+      metadata: { from: booking.paymentStatus, to: newPaymentStatus },
       createdAt: nowIso,
     });
 

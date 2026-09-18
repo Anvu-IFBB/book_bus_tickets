@@ -1,63 +1,66 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
-import { getFirebaseFirestore } from '@/lib/firebase/client';
+import { getAdminFirestore } from '@/lib/firebase/admin';
+import { Firestore } from 'firebase-admin/firestore';
 import { INotificationTemplateRepository, TemplateFilter } from '../interfaces/INotificationTemplateRepository';
 import { NotificationTemplate } from '@/types/notification';
 
 export class FirestoreNotificationTemplateRepository implements INotificationTemplateRepository {
-  private get db() {
-    return getFirebaseFirestore()!;
+  private get db(): Firestore {
+    const firestore = getAdminFirestore();
+    if (!firestore) throw new Error('Firebase Admin Firestore is not initialized.');
+    return firestore;
   }
+  
   private collectionName = 'notificationTemplates';
 
   async createTemplate(templateData: Omit<NotificationTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<NotificationTemplate> {
-    const collRef = collection(this.db, this.collectionName);
-    const docRef = doc(collRef);
+    const collRef = this.db.collection(this.collectionName);
+    const docRef = collRef.doc();
     const newTemplate: NotificationTemplate = {
       ...templateData,
       id: docRef.id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    await setDoc(docRef, newTemplate);
+    await docRef.set(newTemplate);
     return newTemplate;
   }
 
   async findById(id: string): Promise<NotificationTemplate | null> {
-    const docRef = doc(this.db, this.collectionName, id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return null;
+    const docRef = this.db.collection(this.collectionName).doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) return null;
     return docSnap.data() as NotificationTemplate;
   }
 
   async updateTemplate(id: string, updates: Partial<Omit<NotificationTemplate, 'id'>>): Promise<NotificationTemplate> {
-    const docRef = doc(this.db, this.collectionName, id);
+    const docRef = this.db.collection(this.collectionName).doc(id);
     const updatedData = {
       ...updates,
       updatedAt: new Date().toISOString(),
     };
-    await updateDoc(docRef, updatedData);
-    const updatedDoc = await getDoc(docRef);
+    await docRef.update(updatedData);
+    const updatedDoc = await docRef.get();
     return updatedDoc.data() as NotificationTemplate;
   }
 
   async listTemplates(filter?: TemplateFilter): Promise<NotificationTemplate[]> {
-    let q = query(collection(this.db, this.collectionName));
+    let q: FirebaseFirestore.Query = this.db.collection(this.collectionName);
     
     if (filter?.channel) {
-      q = query(q, where('channel', '==', filter.channel));
+      q = q.where('channel', '==', filter.channel);
     }
     if (filter?.enabled !== undefined) {
-      q = query(q, where('enabled', '==', filter.enabled));
+      q = q.where('enabled', '==', filter.enabled);
     }
 
-    q = query(q, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
+    q = q.orderBy('createdAt', 'desc');
+    const snapshot = await q.get();
     
     return snapshot.docs.map(doc => doc.data() as NotificationTemplate);
   }
 
   async deleteTemplate(id: string): Promise<void> {
-    const docRef = doc(this.db, this.collectionName, id);
-    await deleteDoc(docRef);
+    const docRef = this.db.collection(this.collectionName).doc(id);
+    await docRef.delete();
   }
 }

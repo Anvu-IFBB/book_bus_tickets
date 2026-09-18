@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
 
 export const metadata = {
-  title: 'Analytics Dashboard - Admin',
+  title: 'Báo Cáo Thống Kê - Admin',
 };
 
 export default async function AnalyticsPage() {
@@ -27,7 +27,6 @@ export default async function AnalyticsPage() {
       <AdminHeader
         title="Báo Cáo Thống Kê"
         description="Tổng quan doanh thu, đơn hàng, phản hồi và hiệu suất vận hành"
-        onMenuClick={() => {}}
       />
 
       <div className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">

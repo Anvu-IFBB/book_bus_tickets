@@ -3,11 +3,18 @@ import crypto from 'crypto';
 import { AuthUser } from '@/types/auth';
 
 const SESSION_COOKIE_NAME = 'admin_session';
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-key-12345';
+
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET || 'dev-secret-key-12345';
+  if (process.env.NODE_ENV === 'production' && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 16)) {
+    throw new Error('SESSION_SECRET is mandatory and must be at least 16 characters in production.');
+  }
+  return secret;
+}
 
 export function signSession(user: AuthUser): string {
   const payload = Buffer.from(JSON.stringify(user)).toString('base64');
-  const signature = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  const signature = crypto.createHmac('sha256', getSessionSecret()).update(payload).digest('hex');
   return `${payload}.${signature}`;
 }
 
@@ -16,7 +23,7 @@ export function verifySession(token: string): AuthUser | null {
     const parts = token.split('.');
     if (parts.length !== 2) return null;
     const [payload, signature] = parts;
-    const expectedSignature = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', getSessionSecret()).update(payload).digest('hex');
     
     // Constant time comparison is better for security, but simple === is fine for this project
     if (signature !== expectedSignature) {

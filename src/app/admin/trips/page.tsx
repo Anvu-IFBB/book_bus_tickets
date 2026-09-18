@@ -12,13 +12,13 @@ import {
 } from 'lucide-react';
 import { AdminHeader } from '@/components/admin/admin-header';
 import { TripStatusBadge } from '@/components/admin/status-badges';
-import { useAdminLayout } from '../admin-layout-shell';
+
 import { listTripsAction, createTripAction, updateTripStatusAction, listVehiclesAction, listDriversAction, detectVehicleConflictAction, detectDriverConflictAction } from '@/app/actions/fleetCrudActions';
 import { Trip, Vehicle, Driver } from '@/types/fleet';
 import { Card, Button, Input, Select, Modal, useToast } from '@/components/ui';
 
 export default function AdminTripsPage() {
-  const { openSidebar } = useAdminLayout();
+
   const { success, error } = useToast();
 
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -215,7 +215,6 @@ export default function AdminTripsPage() {
       <AdminHeader
         title="Điều Phối Chuyến Xe"
         description="Lập lịch trình, ghép xe, phân tài xế và kiểm soát thời gian di chuyển toàn tuyến"
-        onMenuClick={openSidebar}
         onRefresh={handleRefresh}
         isRefreshing={refreshing}
         actions={

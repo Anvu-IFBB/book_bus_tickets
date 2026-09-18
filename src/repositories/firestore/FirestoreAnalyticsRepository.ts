@@ -1,7 +1,6 @@
 import { IAnalyticsRepository } from '../interfaces/analyticsRepository';
 import { AnalyticsDateRange, AnalyticsSummary, BookingAnalytics, RevenueAnalytics, FleetAnalytics, FeedbackAnalytics } from '@/types/analytics';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { getFirebaseFirestore } from '@/lib/firebase/client';
+import { getAdminFirestore } from '@/lib/firebase/admin';
 import { Booking } from '@/types/booking';
 import { Payment } from '@/types/payment';
 import { Trip } from '@/types/fleet';
@@ -9,8 +8,8 @@ import { Feedback } from '@/types/feedback';
 
 export class FirestoreAnalyticsRepository implements IAnalyticsRepository {
   async getAnalyticsSummary(dateRange: AnalyticsDateRange): Promise<AnalyticsSummary> {
-    const db = getFirebaseFirestore();
-    if (!db) throw new Error('Firebase Firestore không khả dụng');
+    const db = getAdminFirestore();
+    if (!db) throw new Error('Firebase Admin Firestore không khả dụng');
 
     const { startDate, endDate } = dateRange;
     
@@ -21,27 +20,27 @@ export class FirestoreAnalyticsRepository implements IAnalyticsRepository {
     const endIso = new Date(`${endDate}T23:59:59.999+07:00`).toISOString();
 
     // 1. Bookings (Filtered by travelDate for operational analytics)
-    const bookingsRef = collection(db, 'bookings');
-    const qBookings = query(bookingsRef, where('travelDate', '>=', startDate), where('travelDate', '<=', endDate));
-    const bookingsSnapshot = await getDocs(qBookings);
+    const bookingsRef = db.collection('bookings');
+    const qBookings = bookingsRef.where('travelDate', '>=', startDate).where('travelDate', '<=', endDate);
+    const bookingsSnapshot = await qBookings.get();
     const bookings = bookingsSnapshot.docs.map(d => d.data() as Booking);
 
     // 2. Payments (Filtered by createdAt for financial analytics)
-    const paymentsRef = collection(db, 'payments');
-    const qPayments = query(paymentsRef, where('createdAt', '>=', startIso), where('createdAt', '<=', endIso));
-    const paymentsSnapshot = await getDocs(qPayments);
+    const paymentsRef = db.collection('payments');
+    const qPayments = paymentsRef.where('createdAt', '>=', startIso).where('createdAt', '<=', endIso);
+    const paymentsSnapshot = await qPayments.get();
     const payments = paymentsSnapshot.docs.map(d => d.data() as Payment);
 
     // 3. Fleet/Trips (Filtered by departureDate)
-    const tripsRef = collection(db, 'trips');
-    const qTrips = query(tripsRef, where('departureDate', '>=', startDate), where('departureDate', '<=', endDate));
-    const tripsSnapshot = await getDocs(qTrips);
+    const tripsRef = db.collection('trips');
+    const qTrips = tripsRef.where('departureDate', '>=', startDate).where('departureDate', '<=', endDate);
+    const tripsSnapshot = await qTrips.get();
     const trips = tripsSnapshot.docs.map(d => d.data() as Trip);
 
     // 4. Feedbacks (Filtered by submittedAt)
-    const feedbacksRef = collection(db, 'feedbacks');
-    const qFeedbacks = query(feedbacksRef, where('submittedAt', '>=', startIso), where('submittedAt', '<=', endIso));
-    const feedbacksSnapshot = await getDocs(qFeedbacks);
+    const feedbacksRef = db.collection('feedbacks');
+    const qFeedbacks = feedbacksRef.where('submittedAt', '>=', startIso).where('submittedAt', '<=', endIso);
+    const feedbacksSnapshot = await qFeedbacks.get();
     const feedbacks = feedbacksSnapshot.docs.map(d => d.data() as Feedback);
 
     return {

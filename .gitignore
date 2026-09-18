@@ -1,6 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# =========================================================
+# Dependencies
+# =========================================================
 /node_modules
 /.pnp
 .pnp.*
@@ -10,36 +10,95 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# =========================================================
+# Testing
+# =========================================================
 /coverage
+/playwright-report/
+/test-results/
+/blob-report/
 
-# next.js
+# =========================================================
+# Next.js
+# =========================================================
 /.next/
 /out/
 
-# production
+# =========================================================
+# Production
+# =========================================================
 /build
 
-# misc
-.DS_Store
-*.pem
+# =========================================================
+# Environment variables / Secrets
+# =========================================================
+.env*
+!.env.example
 
-# debug
+# =========================================================
+# Firebase local files / cache
+# =========================================================
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# =========================================================
+# Firebase / Google credentials
+# NEVER commit service account credentials
+# =========================================================
+*serviceAccount*.json
+*service-account*.json
+*firebase-adminsdk*.json
+*firebase-admin*.json
+*google-credentials*.json
+credentials.json
+
+# Private keys
+*.pem
+*.key
+
+# =========================================================
+# Vercel
+# =========================================================
+.vercel
+
+# =========================================================
+# Debug logs
+# =========================================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-!.env.example
+# =========================================================
+# OS
+# =========================================================
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# vercel
-.vercel
-
-# ide
+# =========================================================
+# IDE
+# =========================================================
 .vscode/
+.idea/
+*.iml
 
-# typescript
+# =========================================================
+# TypeScript
+# =========================================================
 *.tsbuildinfo
 next-env.d.ts
+
+# =========================================================
+# Temporary files
+# =========================================================
+*.tmp
+*.temp
+*.bak
+# firebase / service account secrets
+firebase-adminsdk*.json
+serviceAccount*.json
+*-firebase-adminsdk-*.json

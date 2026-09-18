@@ -43,7 +43,7 @@ import {
   FirestoreAnalyticsSummaryRepository,
 } from './firestore';
 
-import { isFirebaseConfigured } from '@/lib/firebase/config';
+import { isFirebaseAdminConfigured } from '@/lib/firebase/config';
 
 // Global state caching across module reloads
 const globalRepoState = globalThis as unknown as {
@@ -78,7 +78,11 @@ export function getActiveRepositoryMode(): 'memory' | 'firestore' {
     return globalRepoState._testOverrideMode;
   }
   const envMode = process.env.REPOSITORY_MODE?.toLowerCase();
-  if (envMode === 'firestore' && isFirebaseConfigured()) {
+  
+  if (envMode === 'firestore') {
+    if (!isFirebaseAdminConfigured()) {
+      throw new Error('CRITICAL: REPOSITORY_MODE is set to "firestore" but Firebase Admin SDK is missing required environment variables (FIREBASE_ADMIN_PRIVATE_KEY, etc). Cannot start application.');
+    }
     return 'firestore';
   }
   return 'memory';

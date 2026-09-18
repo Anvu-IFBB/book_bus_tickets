@@ -20,7 +20,7 @@ import {
 import { AdminHeader } from '@/components/admin/admin-header';
 import { KpiStatCard } from '@/components/admin/kpi-stat-card';
 import { BookingStatusBadge } from '@/components/admin/status-badges';
-import { useAdminLayout } from './admin-layout-shell';
+
 import { useAdminAuth } from '@/components/admin/admin-auth-context';
 import type { OperationsSummary } from '@/services/operationsService';
 import { getOperationsSummaryAction } from '@/app/actions/operationsQueries';
@@ -28,7 +28,7 @@ import { formatCurrencyVN } from '@/lib/utils/formatters';
 import { Card, Button } from '@/components/ui';
 
 export default function AdminDashboardPage() {
-  const { openSidebar } = useAdminLayout();
+
   const { user, role } = useAdminAuth();
 
   const [summary, setSummary] = useState<OperationsSummary | null>(null);
@@ -36,10 +36,14 @@ export default function AdminDashboardPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+  
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [startDate, setStartDate] = useState<string>(todayStr);
+  const [endDate, setEndDate] = useState<string>(todayStr);
 
   useEffect(() => {
     let ignore = false;
-    getOperationsSummaryAction()
+    getOperationsSummaryAction(startDate, endDate)
       .then((sum) => {
         if (!ignore) {
           setSummary(sum);
@@ -61,7 +65,7 @@ export default function AdminDashboardPage() {
     return () => {
       ignore = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, startDate, endDate]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -79,7 +83,6 @@ export default function AdminDashboardPage() {
       <AdminHeader
         title="Tổng Quan Vận Hành"
         description="Giám sát tình trạng booking, trạng thái đội xe và điều phối chuyến theo thời gian thực"
-        onMenuClick={openSidebar}
         onRefresh={handleRefresh}
         isRefreshing={refreshing}
       />
@@ -101,7 +104,22 @@ export default function AdminDashboardPage() {
               Hệ thống kết nối tuyến 5 tỉnh: Quảng Ninh ⇄ Hải Phòng ⇄ Thái Bình ⇄ Nam Định ⇄ Ninh Bình.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 bg-navy-800 rounded-md p-1 border border-navy-700">
+              <input 
+                type="date" 
+                className="bg-navy-900 text-white text-xs px-2 py-1.5 rounded-md border-none focus:ring-1 focus:ring-gold-500"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+              <span className="text-slate-400 text-xs">-</span>
+              <input 
+                type="date" 
+                className="bg-navy-900 text-white text-xs px-2 py-1.5 rounded-md border-none focus:ring-1 focus:ring-gold-500"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
             <Link href="/admin/bookings">
               <Button variant="primary" size="md" className="shadow-goldGlow text-xs sm:text-sm min-h-[44px]">
                 Xử Lý Booking
@@ -171,7 +189,7 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between">
                 <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 font-serif flex items-center gap-2">
                   <CalendarCheck className="w-4 h-4 text-gold-600" />
-                  Chỉ Số Booking & Doanh Thu Hôm Nay
+                  Chỉ Số Booking & Doanh Thu
                 </h3>
                 <span className="text-xs text-slate-500">Dữ liệu thực tế</span>
               </div>
@@ -179,7 +197,7 @@ export default function AdminDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
                 {/* 1. Tổng đơn hôm nay */}
                 <KpiStatCard
-                  title="Tổng Đơn Hôm Nay"
+                  title="Tổng Đơn"
                   value={summary?.totalBookingsToday ?? 0}
                   subtitle="Đặt vé, hợp đồng & gửi hàng"
                   icon={<CalendarCheck className="w-5 h-5" />}
@@ -440,7 +458,7 @@ export default function AdminDashboardPage() {
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-indigo-600" />
                       <h4 className="font-bold text-sm text-navy-950 font-serif">
-                        Chuyến Xe Hôm Nay ({summary?.upcomingTrips.length ?? 0})
+                        Chuyến Xe ({summary?.upcomingTrips.length ?? 0})
                       </h4>
                     </div>
                     <Link

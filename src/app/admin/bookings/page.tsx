@@ -22,14 +22,14 @@ import { AdminHeader } from '@/components/admin/admin-header';
 import { BookingStatusBadge } from '@/components/admin/status-badges';
 import { BookingDetailDrawer } from '@/components/admin/booking-detail-drawer';
 import { AssignVehicleModal, AssignDriverModal } from '@/components/admin/assign-modals';
-import { useAdminLayout } from '../admin-layout-shell';
+
 import type { EnrichedBooking, ListBookingsFilter } from '@/services/operationsService';
 import { listBookingsWithDetailsAction } from '@/app/actions/operationsQueries';
 import { Booking, BookingStatus, BookingServiceType } from '@/types/booking';
 import { Card, Input, Select, Button } from '@/components/ui';
 
 function BookingsContent() {
-  const { openSidebar } = useAdminLayout();
+
   const searchParams = useSearchParams();
   const initialCode = searchParams.get('code') || '';
   const initialStatus = searchParams.get('status') || 'ALL';
@@ -159,7 +159,6 @@ function BookingsContent() {
       <AdminHeader
         title="Quản Lý Đơn Booking"
         description="Tìm kiếm theo mã, SĐT, tên khách; lọc trạng thái, dịch vụ và điều phối xe/tài xế"
-        onMenuClick={openSidebar}
         onRefresh={handleRefresh}
         isRefreshing={refreshing}
       />

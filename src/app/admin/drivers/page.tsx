@@ -10,13 +10,13 @@ import {
 } from 'lucide-react';
 import { AdminHeader } from '@/components/admin/admin-header';
 import { DriverStatusBadge } from '@/components/admin/status-badges';
-import { useAdminLayout } from '../admin-layout-shell';
+
 import { listDriversAction, createDriverAction, updateDriverStatusAction } from '@/app/actions/fleetCrudActions';
 import { Driver, DriverStatus } from '@/types/fleet';
 import { Card, Button, Input, Select, Modal, useToast } from '@/components/ui';
 
 export default function AdminDriversPage() {
-  const { openSidebar } = useAdminLayout();
+
   const { success, error } = useToast();
 
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -120,7 +120,6 @@ export default function AdminDriversPage() {
       <AdminHeader
         title="Quản Lý Tài Xế"
         description="Đội ngũ lái xe giàu kinh nghiệm, ca trực và phân công nhiệm vụ an toàn"
-        onMenuClick={openSidebar}
         onRefresh={handleRefresh}
         isRefreshing={refreshing}
         actions={

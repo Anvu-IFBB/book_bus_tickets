@@ -2,8 +2,8 @@
 
 import { operationsService } from '@/services/operationsService';
 
-export async function getOperationsSummaryAction() {
-  return operationsService.getOperationsSummary();
+export async function getOperationsSummaryAction(startDate?: string, endDate?: string) {
+  return operationsService.getOperationsSummary(startDate, endDate);
 }
 
 import { ListBookingsFilter } from '@/services/operationsService';

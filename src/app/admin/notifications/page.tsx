@@ -1,12 +1,11 @@
-import { Metadata } from 'next';
 import { requireAuth } from '@/lib/server/auth/requireAuth';
 import { Permissions } from '@/lib/server/auth/permissions';
 import NotificationTemplatesPanel from '@/components/admin/notifications/NotificationTemplatesPanel';
 import { getSettingsRepository } from '@/repositories';
 import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Notification Center - Admin Dashboard',
+export const metadata = {
+  title: 'Trung tâm thông báo - Admin',
 };
 
 export default async function NotificationsPage() {

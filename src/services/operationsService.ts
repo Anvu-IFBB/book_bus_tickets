@@ -142,18 +142,33 @@ export class OperationsService {
   }
 
   /**
-   * Lấy dữ liệu tổng quan cho Operations Dashboard
+   * Lấy dữ liệu tổng quan cho Operations Dashboard, có thể lọc theo khoảng thời gian
    */
-  async getOperationsSummary(): Promise<OperationsSummary> {
+  async getOperationsSummary(startDate?: string, endDate?: string): Promise<OperationsSummary> {
     const todayStr = new Date().toISOString().slice(0, 10);
+    const filterStart = startDate || todayStr;
+    const filterEnd = endDate || todayStr;
+    
     const allBookings = await this.bookingRepo.list();
     const allVehicles = await this.fleetRepo.listVehicles();
     const allDrivers = await this.fleetRepo.listDrivers();
-    const tripsToday = await this.fleetRepo.listTrips(todayStr);
+    
+    // API listTrips(date) hiện tại chỉ query 1 ngày.
+    // Nếu có range, ta sẽ query tất cả trips và lọc (nếu số lượng quá lớn thì cần nâng cấp fleetRepo sau, tạm thời ta list theo date filterEnd hoặc filter bằng tay).
+    // Tạm thời lấy danh sách tất cả Trips (fleetRepo.listTrips() nếu cho phép ko truyền ngày, nhưng theo hiện tại listTrips() đòi hỏi date).
+    // Let's fallback: if single day, pass filterStart. If range, pass undefined and filter in memory if fleetRepo supports it.
+    // Actually fleetRepo.listTrips takes `date?: string`. So if we pass nothing, it returns all.
+    // Wait, let's just pass nothing and filter.
+    const allTrips = await this.fleetRepo.listTrips();
 
-    const bookingsToday = allBookings.filter(
-      (b) => b.travelDate === todayStr || b.createdAt.slice(0, 10) === todayStr
-    );
+    const filteredBookings = allBookings.filter((b) => {
+      const bDate = b.travelDate || b.createdAt.slice(0, 10);
+      return bDate >= filterStart && bDate <= filterEnd;
+    });
+
+    const filteredTrips = allTrips.filter((t) => {
+      return t.departureDate >= filterStart && t.departureDate <= filterEnd;
+    });
 
     const bookingsByStatus: OperationsSummary['bookingsByStatus'] = {
       NEW: 0,
@@ -167,7 +182,7 @@ export class OperationsService {
 
     let totalRevenue = 0;
 
-    allBookings.forEach((b) => {
+    filteredBookings.forEach((b) => {
       const st = b.bookingStatus;
       if (bookingsByStatus[st] !== undefined) {
         bookingsByStatus[st]++;
@@ -240,8 +255,8 @@ export class OperationsService {
       }
     });
 
-    // Đơn cần xử lý gấp (NEW, CONTACTING)
-    const rawAttention = allBookings
+    // Đơn cần xử lý gấp (NEW, CONTACTING) (Chỉ lấy trong ngày hiện tại cho realtime focus, hoặc theo filteredBookings)
+    const rawAttention = filteredBookings
       .filter((b) => b.bookingStatus === 'NEW' || b.bookingStatus === 'CONTACTING')
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 6);
@@ -251,18 +266,18 @@ export class OperationsService {
     );
 
     // Chuyến xe hôm nay chưa hoàn thành
-    const upcomingTrips = tripsToday
+    const upcomingTrips = filteredTrips
       .filter((t) => t.status !== 'COMPLETED' && t.status !== 'CANCELLED')
       .slice(0, 6);
 
     return {
       today: todayStr,
-      totalBookingsToday: bookingsToday.length,
+      totalBookingsToday: filteredBookings.length,
       totalRevenue,
       bookingsByStatus,
       fleetStatus,
       driverStatus,
-      totalTripsToday: tripsToday.length,
+      totalTripsToday: filteredTrips.length,
       upcomingTrips,
       bookingsNeedingAttention,
       activeAlerts,

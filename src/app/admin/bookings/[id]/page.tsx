@@ -26,7 +26,7 @@ import {
 import { AdminHeader } from '@/components/admin/admin-header';
 import { BookingStatusBadge, PaymentStatusBadge } from '@/components/admin/status-badges';
 import { AssignVehicleModal, AssignDriverModal } from '@/components/admin/assign-modals';
-import { useAdminLayout } from '../../admin-layout-shell';
+
 import { useAdminAuth } from '@/components/admin/admin-auth-context';
 import type { EnrichedBooking } from '@/services/operationsService';
 import { getBookingDetailsWithEnrichmentAction } from '@/app/actions/operationsQueries';
@@ -34,7 +34,7 @@ import { Booking, BookingStatus } from '@/types/booking';
 import { formatCurrencyVN } from '@/lib/utils/formatters';
 import { Card, Button, useToast } from '@/components/ui';
 import { releaseVehicleAction, releaseDriverAction } from '@/app/actions/fleetActions';
-import { updateBookingStatusAction } from '@/app/actions/bookingActions';
+import { updateBookingStatusAction, updatePaymentStatusAction } from '@/app/actions/bookingActions';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -44,7 +44,7 @@ export default function BookingDetailPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const bookingId = resolvedParams.id;
 
-  const { openSidebar } = useAdminLayout();
+
   useAdminAuth();
   const { success, error } = useToast();
 
@@ -114,6 +114,29 @@ export default function BookingDetailPage({ params }: PageProps) {
     }
   };
 
+  const handleUpdatePaymentStatus = async (newPaymentStatus: Booking['paymentStatus']) => {
+    if (!booking) return;
+
+    if (newPaymentStatus === 'REFUNDED') {
+      const confirmed = window.confirm(`Bạn có chắc chắn muốn hoàn tiền đơn booking ${booking.bookingCode} không?`);
+      if (!confirmed) return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await updatePaymentStatusAction(booking.id, newPaymentStatus);
+      if (!res.success || !res.data) throw new Error(res.error || 'Lỗi hệ thống');
+      
+      success(`Đã cập nhật thanh toán thành "${newPaymentStatus}"`);
+      setBooking((prev) => (prev ? { ...prev, ...res.data } : null));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      error(msg, 'Lỗi Cập Nhật Thanh Toán');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleUnassignVehicle = async () => {
     if (!booking || !booking.vehicleId) return;
     setSubmitting(true);
@@ -158,7 +181,6 @@ export default function BookingDetailPage({ params }: PageProps) {
       <AdminHeader
         title={booking ? `Đơn ${booking.bookingCode}` : 'Chi Tiết Booking'}
         description="Xem toàn bộ lịch sử, thông tin lộ trình và thao tác điều phối xe/tài xế"
-        onMenuClick={openSidebar}
         onRefresh={handleRefresh}
         isRefreshing={loading}
       />
@@ -699,6 +721,58 @@ export default function BookingDetailPage({ params }: PageProps) {
                   <p className="text-[11px] text-slate-500">
                     Tài xế có thể thu tiền mặt hoặc hướng dẫn khách chuyển khoản khi lên xe.
                   </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                  <p className="w-full text-xs font-semibold text-slate-600 mb-1">Cập Nhật Trạng Thái Thanh Toán:</p>
+                  
+                  {booking.paymentStatus !== 'PAID' && (
+                    <Button 
+                      variant="success" 
+                      size="sm" 
+                      className="text-xs h-7 px-2"
+                      onClick={() => handleUpdatePaymentStatus('PAID')}
+                      disabled={submitting}
+                    >
+                      Đã Thu Đủ
+                    </Button>
+                  )}
+
+                  {booking.paymentStatus === 'UNPAID' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs h-7 px-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => handleUpdatePaymentStatus('DEPOSIT_PAID')}
+                      disabled={submitting}
+                    >
+                      Đã Cọc
+                    </Button>
+                  )}
+
+                  {booking.paymentStatus !== 'UNPAID' && booking.paymentStatus !== 'REFUNDED' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs h-7 px-2 border-rose-200 text-rose-700 hover:bg-rose-50"
+                      onClick={() => handleUpdatePaymentStatus('REFUNDED')}
+                      disabled={submitting}
+                    >
+                      Hoàn Tiền
+                    </Button>
+                  )}
+
+                  {booking.paymentStatus !== 'UNPAID' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs h-7 px-2 border-slate-200 text-slate-600 hover:bg-slate-50"
+                      onClick={() => handleUpdatePaymentStatus('UNPAID')}
+                      disabled={submitting}
+                    >
+                      Chưa Thanh Toán
+                    </Button>
+                  )}
                 </div>
               </Card>
             </div>

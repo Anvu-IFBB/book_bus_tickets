@@ -53,6 +53,18 @@ export interface AuditLog {
   createdAt: string;
 }
 
+export interface PricingConfig {
+  limousineBasePrice: number;
+  cargoBasePriceUnder5kg: number;
+  cargoBasePriceUnder10kg: number;
+  cargoExtraPerKg: number;
+  contractPricePerDayUnder7Seats: number;
+  contractPricePerDayUnder11Seats: number;
+  contractPricePerDayUnder16Seats: number;
+  contractPricePerDayOver16Seats: number;
+  tourBasePrice: number;
+}
+
 export interface SystemSettings {
   hotline1: string;
   hotline2: string;
@@ -92,5 +104,8 @@ export interface SystemSettings {
   automationEnabled: boolean;
   maxRetryAttempts: number;
   
+  pricingConfig?: PricingConfig;
+  
   updatedAt: string;
 }
+

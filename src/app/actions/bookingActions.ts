@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getActiveRepositoryMode } from '@/repositories';
+import { getActiveRepositoryMode, getSettingsRepository } from '@/repositories';
 import { bookingService } from '@/services/bookingService';
 import { CreateBookingDTO, Booking, BookingStatusHistoryItem, BookingStatus } from '@/types/booking';
 import { Customer } from '@/types/customer';
@@ -12,6 +12,9 @@ import { generateBookingCode, generateCargoCode } from '@/lib/utils/codeGenerato
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { createBookingDTOSchema, updateBookingStatusSchema } from '@/lib/validation/bookingSchema';
 import { handleActionError } from '@/lib/server/action-error';
+import { cleanUndefined } from '@/repositories/firestore/helpers';
+import { calculateEstimatedPrice } from '@/lib/utils/pricingEngine';
+
 export async function createBookingAction(dto: CreateBookingDTO): Promise<{ success: boolean; data?: Booking; error?: string }> {
   try {
     const parsedDTO = createBookingDTOSchema.safeParse(dto);
@@ -34,35 +37,69 @@ export async function createBookingAction(dto: CreateBookingDTO): Promise<{ succ
       return { success: true, data: saved };
     }
 
-    // Chế độ Production Firestore: Dùng Admin SDK Batch / Transaction để đảm bảo tính nguyên tử
+    // 1. Tìm Customer trước khi vào transaction để tránh lock table bằng query
     const db = getAdminFirestore();
     if (!db) {
       throw new Error('Firebase Admin SDK không khả dụng');
     }
-
+    
+    const customersRef = db.collection('customers');
+    const customerQuery = await customersRef.where('phone', '==', cleanPhone).limit(1).get();
+    
     const nowIso = new Date().toISOString();
     const todayYmd = nowIso.slice(0, 10).replace(/-/g, '');
 
+    const settingsRepo = getSettingsRepository();
+    const settings = await settingsRepo.getSettings();
+    const calculatedPrice = calculateEstimatedPrice(dto, settings.pricingConfig);
+
     // Thực thi nguyên tử
     const result = await db.runTransaction(async (transaction) => {
-      // 1. Tìm hoặc tạo Customer
-      const customersRef = db.collection('customers');
-      const customerQuery = await transaction.get(customersRef.where('phone', '==', cleanPhone).limit(1));
-      
+      // 2. Sinh mã Booking an toàn (Sequence) (READ FIRST)
+      const seqRef = db.collection('systemSequences').doc(`daily_${todayYmd}`);
+      const seqDoc = await transaction.get(seqRef);
+
       let customerData: Customer;
       let customerRef: FirebaseFirestore.DocumentReference;
 
       if (!customerQuery.empty) {
         customerRef = customerQuery.docs[0].ref;
-        customerData = customerQuery.docs[0].data() as Customer;
-        // Tăng stats
-        transaction.update(customerRef, {
-          totalBookings: (customerData.totalBookings || 0) + 1,
-          updatedAt: nowIso
-        });
+        // Đọc lại trong transaction để đảm bảo consistency (READ)
+        const customerDoc = await transaction.get(customerRef);
+        
+        // --- ALL READS DONE. NOW WRITES ---
+        
+        if (customerDoc.exists) {
+          customerData = customerDoc.data() as Customer;
+          transaction.update(customerRef, {
+            totalBookings: (customerData.totalBookings || 0) + 1,
+            updatedAt: nowIso
+          });
+        } else {
+          customerData = {
+            id: customerRef.id,
+            name: dto.customerName.trim(),
+            phone: cleanPhone,
+            email: dto.customerEmail?.trim(),
+            address: dto.pickupAddress,
+            totalBookings: 1,
+            completedBookings: 0,
+            cancelledBookings: 0,
+            totalSpent: 0,
+            favoritePickupAddress: dto.pickupAddress,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          };
+          transaction.set(customerRef, cleanUndefined(customerData as unknown as Record<string, unknown>));
+        }
       } else {
         const newId = `cust-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         customerRef = customersRef.doc(newId);
+        // Đọc để tuân thủ luật get before set (READ)
+        await transaction.get(customerRef);
+        
+        // --- ALL READS DONE. NOW WRITES ---
+        
         customerData = {
           id: newId,
           name: dto.customerName.trim(),
@@ -77,13 +114,10 @@ export async function createBookingAction(dto: CreateBookingDTO): Promise<{ succ
           createdAt: nowIso,
           updatedAt: nowIso,
         };
-        transaction.set(customerRef, customerData);
+        transaction.set(customerRef, cleanUndefined(customerData as unknown as Record<string, unknown>));
       }
 
-      // 2. Sinh mã Booking an toàn (Sequence)
-      const seqRef = db.collection('systemSequences').doc(`daily_${todayYmd}`);
-      const seqDoc = await transaction.get(seqRef);
-      
+
       let seq = 1;
       if (seqDoc.exists) {
         seq = (seqDoc.data()?.currentSequence || 0) + 1;
@@ -122,7 +156,7 @@ export async function createBookingAction(dto: CreateBookingDTO): Promise<{ succ
         pickupAddress: dto.pickupAddress,
         dropoffAddress: dto.dropoffAddress,
         vehicleType: dto.vehicleType,
-        price: 0, // Admin sẽ xác nhận
+        price: calculatedPrice,
         deposit: 0,
         paymentStatus: 'UNPAID',
         bookingStatus: 'NEW',
@@ -135,7 +169,7 @@ export async function createBookingAction(dto: CreateBookingDTO): Promise<{ succ
         updatedAt: nowIso,
       };
 
-      transaction.set(bookingRef, bookingData);
+      transaction.set(bookingRef, cleanUndefined(bookingData as unknown as Record<string, unknown>));
 
       // 4. Tạo Payment (UNPAID/PENDING)
       const paymentId = `pay-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -146,16 +180,16 @@ export async function createBookingAction(dto: CreateBookingDTO): Promise<{ succ
         bookingCode: bookingData.bookingCode,
         customerId: customerData.id,
         status: 'PENDING',
-        totalAmount: 0,
+        totalAmount: calculatedPrice,
         paidAmount: 0,
         depositAmount: 0,
-        remainingAmount: 0,
+        remainingAmount: calculatedPrice,
         paymentMethod: 'BANK_TRANSFER',
         createdAt: nowIso,
         updatedAt: nowIso,
       };
 
-      transaction.set(paymentRef, paymentData);
+      transaction.set(paymentRef, cleanUndefined(paymentData as unknown as Record<string, unknown>));
 
       // 5. Ghi Audit Log
       const auditLogId = `log-${Date.now()}`;
@@ -248,6 +282,67 @@ export async function updateBookingStatusAction(bookingId: string, newStatus: Bo
     return { success: true, data: result };
   } catch (error: unknown) {
     return handleActionError(error, 'updateBookingStatusAction');
+  }
+}
+
+export async function updatePaymentStatusAction(bookingId: string, newPaymentStatus: Booking['paymentStatus']): Promise<{ success: boolean; data?: Booking; error?: string }> {
+  try {
+    const { requirePermission } = await import('@/lib/server/auth/requireAuth');
+    const { Permissions } = await import('@/lib/server/auth/permissions');
+    const user = await requirePermission(Permissions.canManageBookings); // Or canManagePayments if defined, let's use canManageBookings
+
+    if (getActiveRepositoryMode() === 'memory') {
+      const updated = await bookingService.updatePaymentStatus(bookingId, newPaymentStatus, user.email, user.role);
+      return { success: true, data: updated };
+    }
+
+    const db = getAdminFirestore();
+    if (!db) throw new Error('Firebase Admin SDK khng kh? d?ng');
+
+    const result = await db.runTransaction(async (transaction) => {
+      const bookingRef = db.collection('bookings').doc(bookingId);
+      const bookingDoc = await transaction.get(bookingRef);
+      if (!bookingDoc.exists) throw new Error('Khng tm th?y don d?t ch?');
+      
+      const booking = bookingDoc.data() as Booking;
+
+      const nowIso = new Date().toISOString();
+      const historyItem = {
+        status: booking.bookingStatus,
+        changedAt: nowIso,
+        changedBy: user.email,
+        note: `Cập nhật thanh toán: ${booking.paymentStatus} -> ${newPaymentStatus}`,
+      };
+
+      const updates: Partial<Booking> = {
+        paymentStatus: newPaymentStatus,
+        statusHistory: [...(booking.statusHistory || []), historyItem],
+        updatedAt: nowIso,
+      };
+
+      transaction.update(bookingRef, updates);
+
+      // Audit Log
+      const auditLogId = `log-${Date.now()}`;
+      const auditRef = db.collection('auditLogs').doc(auditLogId);
+      transaction.set(auditRef, {
+        id: auditLogId,
+        userId: user.id,
+        userEmail: user.email,
+        actorRole: user.role,
+        action: 'PAYMENT_STATUS_UPDATED',
+        entityType: 'BOOKING',
+        entityId: bookingId,
+        metadata: { from: booking.paymentStatus, to: newPaymentStatus },
+        createdAt: nowIso,
+      });
+
+      return { ...booking, ...updates } as Booking;
+    });
+
+    return { success: true, data: result };
+  } catch (error: unknown) {
+    return handleActionError(error, 'updatePaymentStatusAction');
   }
 }
 

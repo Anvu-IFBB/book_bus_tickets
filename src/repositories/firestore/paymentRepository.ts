@@ -1,11 +1,11 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit as firestoreLimit, Firestore, QueryConstraint } from 'firebase/firestore';
-import { getFirebaseFirestore } from '@/lib/firebase/client';
+import { Firestore } from 'firebase-admin/firestore';
+import { getAdminFirestore } from '@/lib/firebase/admin';
 import { IPaymentRepository } from '../interfaces/IPaymentRepository';
 import { Payment, PaymentStatus } from '@/types/payment';
 
 export class FirestorePaymentRepository implements IPaymentRepository {
   private get db(): Firestore {
-    const firestore = getFirebaseFirestore();
+    const firestore = getAdminFirestore();
     if (!firestore) throw new Error('Firestore is not initialized');
     return firestore;
   }
@@ -13,57 +13,53 @@ export class FirestorePaymentRepository implements IPaymentRepository {
   private collectionName = 'payments';
 
   async createPayment(payment: Payment): Promise<Payment> {
-    const docRef = doc(this.db, this.collectionName, payment.id);
-    await setDoc(docRef, payment);
+    const docRef = this.db.collection(this.collectionName).doc(payment.id);
+    await docRef.set(payment);
     return payment;
   }
 
   async getPaymentById(id: string): Promise<Payment | null> {
-    const docRef = doc(this.db, this.collectionName, id);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) return null;
+    const docRef = this.db.collection(this.collectionName).doc(id);
+    const snap = await docRef.get();
+    if (!snap.exists) return null;
     return snap.data() as Payment;
   }
 
   async getPaymentByBookingId(bookingId: string): Promise<Payment | null> {
-    const q = query(
-      collection(this.db, this.collectionName),
-      where('bookingId', '==', bookingId),
-      firestoreLimit(1)
-    );
-    const snap = await getDocs(q);
+    const q = this.db.collection(this.collectionName)
+      .where('bookingId', '==', bookingId)
+      .limit(1);
+    const snap = await q.get();
     if (snap.empty) return null;
     return snap.docs[0].data() as Payment;
   }
 
   async updatePayment(id: string, updates: Partial<Payment>): Promise<Payment> {
-    const docRef = doc(this.db, this.collectionName, id);
+    const docRef = this.db.collection(this.collectionName).doc(id);
     const finalUpdates = {
       ...updates,
       updatedAt: new Date().toISOString()
     };
-    await updateDoc(docRef, finalUpdates);
+    await docRef.update(finalUpdates);
     
     // Fetch updated
-    const snap = await getDoc(docRef);
+    const snap = await docRef.get();
     return snap.data() as Payment;
   }
 
   async listPayments(filters?: { status?: PaymentStatus; bookingCode?: string }, limit: number = 50): Promise<Payment[]> {
-    const constraints: QueryConstraint[] = [];
+    let q: FirebaseFirestore.Query = this.db.collection(this.collectionName);
     
     if (filters?.status) {
-      constraints.push(where('status', '==', filters.status));
+      q = q.where('status', '==', filters.status);
     }
     if (filters?.bookingCode) {
-      constraints.push(where('bookingCode', '==', filters.bookingCode));
+      q = q.where('bookingCode', '==', filters.bookingCode);
     }
     
-    constraints.push(orderBy('createdAt', 'desc'));
-    constraints.push(firestoreLimit(limit));
+    q = q.orderBy('createdAt', 'desc').limit(limit);
     
-    const q = query(collection(this.db, this.collectionName), ...constraints);
-    const snap = await getDocs(q);
+    const snap = await q.get();
     
     return snap.docs.map(doc => doc.data() as Payment);
   }

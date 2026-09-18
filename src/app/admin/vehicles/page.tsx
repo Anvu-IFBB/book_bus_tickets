@@ -10,13 +10,13 @@ import {
 } from 'lucide-react';
 import { AdminHeader } from '@/components/admin/admin-header';
 import { VehicleStatusBadge } from '@/components/admin/status-badges';
-import { useAdminLayout } from '../admin-layout-shell';
+
 import { listVehiclesAction, createVehicleAction, updateVehicleStatusAction } from '@/app/actions/fleetCrudActions';
 import { Vehicle, VehicleStatus } from '@/types/fleet';
 import { Card, Button, Input, Select, Modal, useToast } from '@/components/ui';
 
 export default function AdminVehiclesPage() {
-  const { openSidebar } = useAdminLayout();
+
   const { success, error } = useToast();
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -122,7 +122,6 @@ export default function AdminVehiclesPage() {
       <AdminHeader
         title="Quản Lý Đội Xe"
         description="Danh mục phương tiện 5 - 7 - 11 - 16 - 29 chỗ và theo dõi bảo dưỡng định kỳ"
-        onMenuClick={openSidebar}
         onRefresh={handleRefresh}
         isRefreshing={refreshing}
         actions={

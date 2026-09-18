@@ -13,6 +13,7 @@ import {
   X,
   ShieldCheck,
   LogOut,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { APP_CONFIG } from '@/lib/constants/config';
@@ -65,6 +66,12 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       href: '/admin/trips',
       icon: Route,
       show: true,
+    },
+    {
+      label: 'Cấu Hình Hệ Thống',
+      href: '/admin/settings',
+      icon: Settings,
+      show: role ? ['ADMIN'].includes(role) : false,
     },
   ];
 
