@@ -4,10 +4,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const admin = await import('@/lib/firebase/admin');
+    const adminApp = await import('firebase-admin/app');
     return NextResponse.json({ 
       status: 'ok', 
-      firebaseAdminImported: typeof admin.getAdminAuth === 'function' 
+      firebaseAdminAppImported: !!adminApp 
     });
   } catch (err: any) {
     return NextResponse.json({ 
