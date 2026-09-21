@@ -70,9 +70,20 @@ function LoginForm() {
         }),
       });
 
-      const data = await res.json();
+      let data;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        await res.text(); // Consume the body but ignore it
+        if (!res.ok) {
+          throw new Error(`Đăng nhập thất bại (HTTP ${res.status}). Server không trả về JSON hợp lệ.`);
+        }
+        throw new Error('Lỗi phản hồi từ server: Không phải định dạng JSON.');
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || 'Đăng nhập thất bại. Vui lòng thử lại.');
+        throw new Error(data?.error || `Đăng nhập thất bại (HTTP ${res.status}). Vui lòng thử lại.`);
       }
 
       setSuccessMessage(`Đăng nhập thành công với vai trò ${data.user.role}! Đang chuyển hướng...`);
@@ -104,8 +115,20 @@ function LoginForm() {
           devBypass: true,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Đăng nhập nhanh thất bại');
+
+      let data;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        await res.text(); // Consume the body but ignore it
+        if (!res.ok) {
+          throw new Error(`Đăng nhập nhanh thất bại (HTTP ${res.status}). Server không trả về JSON hợp lệ.`);
+        }
+        throw new Error('Lỗi phản hồi từ server: Không phải định dạng JSON.');
+      }
+
+      if (!res.ok) throw new Error(data?.error || `Đăng nhập nhanh thất bại (HTTP ${res.status})`);
 
       setSuccessMessage(`Đăng nhập thành công với tài khoản ${role}!`);
       setTimeout(() => {

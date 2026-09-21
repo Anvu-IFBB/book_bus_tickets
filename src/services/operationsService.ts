@@ -76,10 +76,10 @@ export interface ListBookingsResult {
 }
 
 export class OperationsService {
-  private bookingRepo = getBookingRepository();
-  private fleetRepo = getFleetRepository();
-  private settingsRepo = getSettingsRepository();
-  private customerRepo = getCustomerRepository();
+  private get bookingRepo() { return getBookingRepository(); }
+  private get fleetRepo() { return getFleetRepository(); }
+  private get settingsRepo() { return getSettingsRepository(); }
+  private get customerRepo() { return getCustomerRepository(); }
 
   /**
    * Bổ sung thông tin khách hàng, xe, tài xế cho một booking

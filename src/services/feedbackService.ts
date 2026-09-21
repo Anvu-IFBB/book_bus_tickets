@@ -9,9 +9,9 @@ import { normalizePhone } from '@/lib/utils/formatters';
 import { FeedbackFilter } from '@/repositories/interfaces/IFeedbackRepository';
 
 export class FeedbackService {
-  private feedbackRepo = getFeedbackRepository();
-  private bookingRepo = getBookingRepository();
-  private settingsRepo = getSettingsRepository();
+  private get feedbackRepo() { return getFeedbackRepository(); }
+  private get bookingRepo() { return getBookingRepository(); }
+  private get settingsRepo() { return getSettingsRepository(); }
 
   /**
    * Khách hàng gửi đánh giá sau khi hoàn thành chuyến đi

@@ -4,11 +4,11 @@ import { Notification, NotificationChannel } from '@/types/notification';
 import { notificationService } from './NotificationService';
 
 export class AutomationService {
-  private automationRepo = getAutomationRepository();
-  private notificationRepo = getNotificationRepository();
-  private bookingRepo = getBookingRepository();
-  private feedbackRepo = getFeedbackRepository();
-  private settingsRepo = getSettingsRepository();
+  private get automationRepo() { return getAutomationRepository(); }
+  private get notificationRepo() { return getNotificationRepository(); }
+  private get bookingRepo() { return getBookingRepository(); }
+  private get feedbackRepo() { return getFeedbackRepository(); }
+  private get settingsRepo() { return getSettingsRepository(); }
 
   /**
    * Scan completed bookings and create feedback reminder jobs.

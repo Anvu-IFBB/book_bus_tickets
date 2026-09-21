@@ -16,8 +16,8 @@ export interface ConflictResult {
 }
 
 export class FleetService {
-  private fleetRepo = getFleetRepository();
-  private settingsRepo = getSettingsRepository();
+  private get fleetRepo() { return getFleetRepository(); }
+  private get settingsRepo() { return getSettingsRepository(); }
 
   // Helper chuyển đổi giờ "HH:mm" thành phút từ 00:00
   private parseMinutes(timeStr: string): number {

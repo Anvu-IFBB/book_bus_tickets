@@ -25,9 +25,9 @@ const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
 };
 
 export class BookingService {
-  private bookingRepo = getBookingRepository();
-  private customerRepo = getCustomerRepository();
-  private settingsRepo = getSettingsRepository();
+  private get bookingRepo() { return getBookingRepository(); }
+  private get customerRepo() { return getCustomerRepository(); }
+  private get settingsRepo() { return getSettingsRepository(); }
 
   /**
    * Tạo booking mới (Vé Limousine, Hợp đồng xe, Gửi hàng hóa, Tour du lịch)

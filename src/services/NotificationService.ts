@@ -4,9 +4,9 @@ import { templateEngine } from '@/lib/notifications/templates/engine';
 import { ProviderFactory } from './notification/ProviderFactory';
 
 export class NotificationService {
-  private notificationRepo = getNotificationRepository();
-  private deliveryRepo = getNotificationDeliveryRepository();
-  private automationRepo = getAutomationRepository();
+  private get notificationRepo() { return getNotificationRepository(); }
+  private get deliveryRepo() { return getNotificationDeliveryRepository(); }
+  private get automationRepo() { return getAutomationRepository(); }
 
   /**
    * Process a notification by ID. Evaluate its template and send it via the correct provider.
