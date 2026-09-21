@@ -1,0 +1,39 @@
+name: Hourly Automation Cron
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  run-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Automation Endpoint
+        env:
+          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$PRODUCTION_URL" ]; then
+            echo "Error: PRODUCTION_URL secret is not set."
+            exit 1
+          fi
+          
+          if [ -z "$CRON_SECRET" ]; then
+            echo "Error: CRON_SECRET secret is not set."
+            exit 1
+          fi
+
+          echo "Triggering automation endpoint..."
+          
+          # Using curl with silent mode and writing status code to a variable
+          # We don't print the secret or the full header.
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "${PRODUCTION_URL}/api/cron/automation" -H "Authorization: Bearer ${CRON_SECRET}" --max-time 60)
+          
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "Success: Endpoint returned HTTP $HTTP_STATUS"
+            exit 0
+          else
+            echo "Error: Endpoint returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
