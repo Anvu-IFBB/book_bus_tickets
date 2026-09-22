@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     if (idToken && isFirebaseAdminConfigured()) {
       const adminAuth = getAdminAuth();
       if (!adminAuth) {
-        return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
+        return NextResponse.json({ error: 'Hệ thống Firebase Admin chưa được khởi tạo' }, { status: 500 });
       }
 
       const decoded = await adminAuth.verifyIdToken(idToken);
@@ -33,8 +33,32 @@ export async function POST(req: NextRequest) {
         lastLoginAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       };
-    } else if (process.env.NODE_ENV !== 'production' && (devBypass || !isFirebaseAdminConfigured())) {
-      // 2. Chế độ Local Dev / Fallback khi chưa có credentials Firebase
+    } 
+    // 2. Chế độ Secure Fallback cho Production (Khi không có Firebase)
+    else if (process.env.NODE_ENV === 'production' && !isFirebaseAdminConfigured()) {
+      const adminEmail = process.env.ADMIN_EMAIL;
+      const adminPassword = process.env.ADMIN_PASSWORD;
+
+      if (!adminEmail || !adminPassword) {
+        return NextResponse.json({ error: 'Hệ thống chưa được cấu hình xác thực an toàn. Vui lòng thiết lập biến môi trường Firebase hoặc Admin Credentials.' }, { status: 500 });
+      }
+
+      if (email === adminEmail && password === adminPassword) {
+        user = {
+          id: `prod-admin-${Date.now()}`,
+          email: adminEmail,
+          displayName: 'Quản Trị Viên (System)',
+          role: 'ADMIN',
+          active: true,
+          lastLoginAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        };
+      } else {
+        return NextResponse.json({ error: 'Email hoặc mật khẩu không chính xác.' }, { status: 401 });
+      }
+    } 
+    // 3. Chế độ Local Dev / Test (Chỉ cho phép ở môi trường không phải production)
+    else if (process.env.NODE_ENV !== 'production' && (devBypass || !isFirebaseAdminConfigured())) {
       // Kiểm tra mật khẩu demo cơ bản
       if (password && password !== 'admin123' && password !== 'operator123') {
         return NextResponse.json({ error: 'Mật khẩu không chính xác (Thử: admin123)' }, { status: 401 });
@@ -51,7 +75,7 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
       };
     } else {
-      return NextResponse.json({ error: 'Invalid authentication request' }, { status: 400 });
+      return NextResponse.json({ error: 'Yêu cầu đăng nhập không hợp lệ.' }, { status: 400 });
     }
 
     // Thiết lập HttpOnly Cookie

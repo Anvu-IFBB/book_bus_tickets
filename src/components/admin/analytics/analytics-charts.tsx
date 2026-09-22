@@ -154,7 +154,7 @@ export function AnalyticsCharts({ summary, isLoading }: AnalyticsChartsProps) {
       {/* Top Tuyến Đường */}
       <Card className="p-5 border-slate-200/80 bg-white lg:col-span-2">
         <h3 className="text-sm font-bold text-navy-950 font-serif mb-4 border-b border-slate-100 pb-2">
-          Top Tuyến Đường Đặt Chuyến Nhiềt Nhất
+          Top Tuyến Đường Đặt Chuyến Nhiều Nhất
         </h3>
         {routeData.length > 0 ? (
           <div className="h-72 w-full">

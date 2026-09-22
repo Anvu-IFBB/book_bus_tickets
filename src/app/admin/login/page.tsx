@@ -171,7 +171,7 @@ function LoginForm() {
               <span>Đăng Nhập Quản Trị</span>
             </div>
             <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-600 border border-slate-200">
-              {firebaseReady ? 'Firebase Production' : 'Dev / Memory Mode'}
+              {firebaseReady ? 'Firebase Production' : 'Chế độ Test / Cục bộ'}
             </span>
           </div>
 

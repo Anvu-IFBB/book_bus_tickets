@@ -48,7 +48,7 @@ export default function AdminInvoiceDetailPage({ params }: { params: { id: strin
       <div className="bg-white p-8 sm:p-12 border border-slate-200 shadow-sm print:shadow-none print:border-none print:p-0">
         <div className="flex justify-between items-start border-b pb-6 mb-6 border-slate-200">
           <div>
-            <h1 className="text-3xl font-black text-navy-900 tracking-tight">INVOICE</h1>
+            <h1 className="text-3xl font-black text-navy-900 tracking-tight">HÓA ĐƠN</h1>
             <p className="text-sm text-slate-500 mt-1">Hóa Đơn Dịch Vụ</p>
           </div>
           <div className="text-right">
