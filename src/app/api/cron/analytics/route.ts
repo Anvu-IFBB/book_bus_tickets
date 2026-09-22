@@ -1,8 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AnalyticsAggregationService } from '@/services/analyticsAggregationService';
 import { formatInTimeZone } from 'date-fns-tz';
+import { getAdminFirestore } from '@/lib/firebase/admin';
+import { Firestore } from 'firebase-admin/firestore';
 
 export const dynamic = 'force-dynamic';
+
+export async function cleanupIdempotencyLocks(db: Firestore | null): Promise<number> {
+  let cleanupCount = 0;
+  try {
+    if (!db) return 0;
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - 7);
+    const thresholdIso = thresholdDate.toISOString();
+
+    const locksRef = db.collection('idempotencyLocks');
+    const staleQuery = locksRef.where('createdAt', '<', thresholdIso).limit(500);
+    const snapshot = await staleQuery.get();
+
+    if (!snapshot.empty) {
+      const batch = db.batch();
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      cleanupCount = snapshot.size;
+    }
+  } catch (cleanupError) {
+    console.error('Idempotency Cleanup Error:', cleanupError);
+    // We log but do not fail the overall cron if cleanup fails,
+    // preserving existing analytics semantics.
+  }
+  return cleanupCount;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +64,11 @@ export async function GET(request: NextRequest) {
       await service.aggregateDateRange(yesterday, today);
     }
 
-    return NextResponse.json({ success: true, message: 'Analytics aggregated successfully' });
+    // --- Phase 7.5.9I: Free-Tier Idempotency Cleanup ---
+    const db = getAdminFirestore();
+    const cleanupCount = await cleanupIdempotencyLocks(db);
+
+    return NextResponse.json({ success: true, message: 'Analytics aggregated successfully', cleanupCount });
   } catch (error: unknown) {
     console.error('Analytics Cron Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

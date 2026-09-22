@@ -89,7 +89,7 @@ async function runPhase7Tests() {
     customerPhone: testPhone,
     departure: 'Hạ Long, Quảng Ninh',
     destination: 'TP Ninh Bình',
-    travelDate: '2026-09-20',
+    travelDate: new Date().toISOString().slice(0, 10),
     travelTime: '08:30',
     pickupAddress: 'Số 12 Lê Thánh Tông, Hạ Long',
     dropoffAddress: 'Khách sạn The Reed, Ninh Bình',
@@ -109,6 +109,9 @@ async function runPhase7Tests() {
   assert.ok(typeof summary.totalBookingsToday === 'number', 'totalBookingsToday phải là number');
   assert.ok(typeof summary.totalRevenue === 'number', 'totalRevenue phải là number');
   console.log('✓ A.1 Tổng hợp số liệu Dashboard thành công');
+
+  console.log('createdBooking:', createdBooking);
+  console.log('summary:', JSON.stringify(summary, null, 2));
 
   assert.ok(summary.bookingsByStatus.NEW >= 1, 'Phải có ít nhất 1 đơn trạng thái NEW');
   assert.ok(summary.bookingsByStatus.COMPLETED >= 0, 'Chỉ số COMPLETED hợp lệ');
