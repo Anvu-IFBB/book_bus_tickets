@@ -43,6 +43,7 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
   onBack,
 }) => {
   const [pricingConfig, setPricingConfig] = useState<PricingConfig | undefined>();
+  const isSubmitting = React.useRef(false);
 
   useEffect(() => {
     let ignore = false;
@@ -314,7 +315,15 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
           type="button"
           variant="primary"
           size="lg"
-          onClick={onConfirm}
+          onClick={async () => {
+            if (isSubmitting.current) return;
+            isSubmitting.current = true;
+            try {
+              await onConfirm();
+            } finally {
+              isSubmitting.current = false;
+            }
+          }}
           isLoading={isLoading}
           rightIcon={<Send className="w-4 h-4" />}
         >

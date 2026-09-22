@@ -45,7 +45,8 @@ async function runTests() {
       travelTime: '10:00',
       passengerCount: 2,
       pickupAddress: 'HN',
-      dropoffAddress: 'HL'
+      dropoffAddress: 'HL',
+      idempotencyKey: crypto.randomUUID(),
     });
     console.log(`✔ Đã tạo booking ${b1.bookingCode} với giá: ${b1.price} đ`);
     if (b1.price !== 280000 * 2) {

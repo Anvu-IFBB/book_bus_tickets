@@ -37,14 +37,12 @@ export async function createBookingAction(dto: CreateBookingDTO): Promise<{ succ
       return { success: true, data: saved };
     }
 
-    // 1. Tìm Customer trước khi vào transaction để tránh lock table bằng query
     const db = getAdminFirestore();
     if (!db) {
       throw new Error('Firebase Admin SDK không khả dụng');
     }
-    
+
     const customersRef = db.collection('customers');
-    const customerQuery = await customersRef.where('phone', '==', cleanPhone).limit(1).get();
     
     const nowIso = new Date().toISOString();
     const todayYmd = nowIso.slice(0, 10).replace(/-/g, '');
@@ -55,6 +53,30 @@ export async function createBookingAction(dto: CreateBookingDTO): Promise<{ succ
 
     // Thực thi nguyên tử
     const result = await db.runTransaction(async (transaction) => {
+      // 0. Idempotency Check (READ FIRST — always enforced)
+      const idempotencyRef = db.collection('idempotencyLocks').doc(dto.idempotencyKey);
+      const lockDoc = await transaction.get(idempotencyRef);
+      let existingBooking: Booking | null = null;
+      if (lockDoc.exists) {
+        const lockData = lockDoc.data();
+        if (lockData?.bookingId) {
+          const bDoc = await transaction.get(db.collection('bookings').doc(lockData.bookingId as string));
+          if (bDoc.exists) {
+            existingBooking = bDoc.data() as Booking;
+          }
+        }
+        if (!existingBooking) {
+          throw new Error('Yêu cầu trùng lặp hoặc đang được xử lý.');
+        }
+      }
+
+      if (existingBooking) {
+        return existingBooking;
+      }
+
+      // 1. Tìm Customer (READ FIRST)
+      const customerQuery = await transaction.get(customersRef.where('phone', '==', cleanPhone).limit(1));
+
       // 2. Sinh mã Booking an toàn (Sequence) (READ FIRST)
       const seqRef = db.collection('systemSequences').doc(`daily_${todayYmd}`);
       const seqDoc = await transaction.get(seqRef);
@@ -169,6 +191,8 @@ export async function createBookingAction(dto: CreateBookingDTO): Promise<{ succ
         updatedAt: nowIso,
       };
 
+      transaction.set(idempotencyRef, { bookingId, createdAt: nowIso });
+
       transaction.set(bookingRef, cleanUndefined(bookingData as unknown as Record<string, unknown>));
 
       // 4. Tạo Payment (UNPAID/PENDING)
@@ -235,12 +259,12 @@ export async function updateBookingStatusAction(bookingId: string, newStatus: Bo
     }
 
     const db = getAdminFirestore();
-    if (!db) throw new Error('Firebase Admin SDK khng kh? d?ng');
+    if (!db) throw new Error('Firebase Admin SDK không khả dụng');
 
     const result = await db.runTransaction(async (transaction) => {
       const bookingRef = db.collection('bookings').doc(bookingId);
       const bookingDoc = await transaction.get(bookingRef);
-      if (!bookingDoc.exists) throw new Error('Khng tm th?y don d?t ch?');
+      if (!bookingDoc.exists) throw new Error('Không tìm thấy đơn đặt chỗ');
       
       const booking = bookingDoc.data() as Booking;
 
@@ -297,12 +321,12 @@ export async function updatePaymentStatusAction(bookingId: string, newPaymentSta
     }
 
     const db = getAdminFirestore();
-    if (!db) throw new Error('Firebase Admin SDK khng kh? d?ng');
+    if (!db) throw new Error('Firebase Admin SDK không khả dụng');
 
     const result = await db.runTransaction(async (transaction) => {
       const bookingRef = db.collection('bookings').doc(bookingId);
       const bookingDoc = await transaction.get(bookingRef);
-      if (!bookingDoc.exists) throw new Error('Khng tm th?y don d?t ch?');
+      if (!bookingDoc.exists) throw new Error('Không tìm thấy đơn đặt chỗ');
       
       const booking = bookingDoc.data() as Booking;
 

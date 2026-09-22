@@ -21,6 +21,7 @@ async function runPhase61Tests() {
     customerPhone: testPhone,
     pickupAddress: 'Trần Duy Hưng',
     dropoffAddress: 'Bãi Cháy',
+    idempotencyKey: crypto.randomUUID(),
   };
 
   console.log('\n1. Creating public booking...');

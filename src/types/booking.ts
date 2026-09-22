@@ -108,4 +108,5 @@ export interface CreateBookingDTO {
   cargoDetails?: CargoDetails;
   contractDetails?: ContractVehicleDetails;
   tourDetails?: TourBookingDetails;
+  idempotencyKey: string;
 }

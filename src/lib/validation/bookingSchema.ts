@@ -162,6 +162,7 @@ export const createBookingDTOSchema = z.object({
   cargoDetails: z.any().optional(),
   contractDetails: z.any().optional(),
   tourDetails: z.any().optional(),
+  idempotencyKey: z.string().min(1, 'Khóa xử lý là bắt buộc').max(100, 'Khóa xử lý không hợp lệ'),
 });
 
 export const updateBookingStatusSchema = z.object({

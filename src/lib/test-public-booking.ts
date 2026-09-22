@@ -14,7 +14,8 @@ async function runBookingTest() {
       travelTime: '10:00',
       passengerCount: 2,
       pickupAddress: 'HN Test',
-      dropoffAddress: 'HL Test'
+      dropoffAddress: 'HL Test',
+      idempotencyKey: crypto.randomUUID(),
     });
     
     if (!b1.success || !b1.data) {

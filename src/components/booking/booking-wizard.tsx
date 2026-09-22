@@ -51,6 +51,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
   const updateFormData = (patch: Partial<BookingFormData>) => {
     setFormData((prev) => ({ ...prev, ...patch }));
@@ -63,6 +64,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
     });
     setCreatedBooking(null);
     setError(undefined);
+    setIdempotencyKey(crypto.randomUUID());
     setStep(1);
   };
 
@@ -179,6 +181,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
         pickupAddress: formData.pickupAddress.trim(),
         dropoffAddress: formData.dropoffAddress.trim(),
         note: formData.note?.trim(),
+        idempotencyKey,
       };
 
       if (formData.serviceType === 'CONTRACT') {
